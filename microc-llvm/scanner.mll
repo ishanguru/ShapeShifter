@@ -42,6 +42,7 @@ rule token = parse
 | '*'      { TIMES }
 | '/'      { DIVIDE }
 | '='      { ASSIGN }
+| '.'	   { DOT } (* ADDED BY US *)
 | "=="     { EQ }
 | "!="     { NEQ }
 | '<'      { LT }
@@ -51,13 +52,18 @@ rule token = parse
 | "&&"     { AND }
 | "||"     { OR }
 | "!"      { NOT }
+| "UU"	   { UNION } (* ADDED BY US *)
+| "NU"	   { INTERSECT } (* ADDED BY US *)
 | "if"     { IF }
+| "elif"   { ELIF } (* ADDED BY US *)
 | "else"   { ELSE }
 | "for"    { FOR }
 | "while"  { WHILE }
 | "return" { RETURN }
 | "int"    { INT }
+| "double" { DOUBLE } (* ADDED BY US *)
 | "bool"   { BOOL }
+| "shape"  { SHAPE } (* ADDED BY US *)
 | "void"   { VOID }
 | "true"   { TRUE }
 | "false"  { FALSE }
@@ -65,6 +71,7 @@ rule token = parse
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
 | eof { EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
+| string 	{ STRING_LITERAL(str) } (* ADDED BY US *)
 
 and comment = parse
   "*/" { token lexbuf }
