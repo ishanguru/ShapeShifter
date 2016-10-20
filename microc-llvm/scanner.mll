@@ -1,4 +1,4 @@
-(* Ocamllex scanner for MicroC *)
+(* Ocamllex scanner for ShapeShifter *)
 
 { open Parser }
 
@@ -27,6 +27,13 @@
 	Need to have the scanner and parser done
 
  *)
+
+let lc_letters = ['a' - 'z']
+let uc_letters = ['A' - 'Z']
+let operator_chars = ['!' '$' '%' '&' '*' '+' '-'] (* We can add more if we need to *)
+let escape_sequence = '\'['\' ''' '"' 'n' 'r' 't'] (* http://caml.inria.fr/pub/docs/manual-ocaml/lex.html -- helpful link*)
+let string = '"'((lc_letters | uc_letters | operator_chars | escape_sequence)*)'"'
+
 
 rule token = parse
   [' ' '\t' '\r' '\n'] { token lexbuf } (* Whitespace *)
@@ -71,7 +78,7 @@ rule token = parse
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
 | eof { EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
-| string 	{ STRING_LITERAL(str) } (* ADDED BY US *)
+| string 	{ STRING_LITERAL(str) } (* ADDED BY US --- the real question is whether strings already exist or if we need to do a grammar for them *)
 
 and comment = parse
   "*/" { token lexbuf }
