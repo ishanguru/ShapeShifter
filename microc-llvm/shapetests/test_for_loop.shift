@@ -1,0 +1,18 @@
+
+// Make a 5 layer pyramid using a for loop
+
+Scene {
+
+    SHAPE base = CUBE; 
+    int i; 
+    // Scale: 1, .9, .8, .7, .6
+    SHAPE prev = Copy(base);  
+    for (i = 1; i < 5; ++i ) {
+        SHAPE next = Copy(prev); 
+        Scale(next, 1-i*.1, 1-i*.1, 1-i*.1); 
+        Translate(next, 0, i*.1, 0); 
+        base = Union(base, next); 
+        prev = next;  
+    }
+
+}

@@ -1,0 +1,12 @@
+
+
+// Make sure that doubles are recognized
+
+Scene {
+    double a = 10.0; 
+    double b = -2.0; 
+    double c = b / a; 
+    print(c); 
+
+}
+

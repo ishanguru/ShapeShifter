@@ -62,6 +62,7 @@ let check (globals, functions) =
        with Not_found -> raise (Failure ("unrecognized function " ^ s))
   in
 
+  (* This is where we'll have to make sure a "Scene" is defined*)
   let _ = function_decl "main" in (* Ensure "main" is defined *)
 
   let check_function func =

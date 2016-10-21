@@ -1,0 +1,12 @@
+
+// Call a function that returns a scaled sphere 
+
+SHAPE function sphereFunc(double r) {
+    SHAPE sph = SPHERE;
+    Scale(sph, r, r, r);
+    return sph; 
+}
+
+Scene {
+    SHAPE sh = sphereFunc(r); 
+}
