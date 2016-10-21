@@ -1,0 +1,13 @@
+// Union 2 spheres
+
+Scene {
+    SHAPE sph1 = SPHERE; 
+    SHAPE sph2 = SPHERE; 
+
+    Translate(sph1, 0., .5, 0.);
+    Translate(sph2, 0., -.5, 0.);
+
+    SHAPE sphu = Union(sph1, sph2);
+
+}
+

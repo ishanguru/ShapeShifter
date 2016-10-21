@@ -1,0 +1,6 @@
+// Initialize a sphere
+
+Scene {
+    SHAPE sph = SPHERE; 
+
+}

@@ -1,0 +1,11 @@
+
+// I am a comment 
+
+// This program has no scene and should fail
+
+SceneWhatScene {
+
+
+}
+
+

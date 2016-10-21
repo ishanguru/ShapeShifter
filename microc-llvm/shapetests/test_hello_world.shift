@@ -1,0 +1,9 @@
+
+// Test: Hello world
+
+Scene {
+    
+    print("Hello world!");
+
+}
+

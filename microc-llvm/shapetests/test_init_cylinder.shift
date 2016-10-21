@@ -1,0 +1,5 @@
+// Initialize a cylinder
+
+Scene {
+    SHAPE cyl = CYLINDER; 
+}
