@@ -1,7 +1,7 @@
 
 // Have a while loop
 
-Shape {
+Scene {
     int i = 0; 
     while (i < 3) {
         print(i); 
