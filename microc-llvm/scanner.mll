@@ -37,43 +37,49 @@ let string = '"'((lc_letters | uc_letters | operator_chars | escape_sequence)*)'
 
 rule token = parse
   [' ' '\t' '\r' '\n'] { token lexbuf } (* Whitespace *)
-| "/*"     { comment lexbuf }           (* Comments *)
-| '('      { LPAREN }
-| ')'      { RPAREN }
-| '{'      { LBRACE }
-| '}'      { RBRACE }
-| ';'      { SEMI }
-| ','      { COMMA }
-| '+'      { PLUS }
-| '-'      { MINUS }
-| '*'      { TIMES }
-| '/'      { DIVIDE }
-| '='      { ASSIGN }
-| '.'	   { DOT } (* ADDED BY US *)
-| "=="     { EQ }
-| "!="     { NEQ }
-| '<'      { LT }
-| "<="     { LEQ }
-| ">"      { GT }
-| ">="     { GEQ }
-| "&&"     { AND }
-| "||"     { OR }
-| "!"      { NOT }
-| "UU"	   { UNION } (* ADDED BY US *)
-| "NU"	   { INTERSECT } (* ADDED BY US *)
-| "if"     { IF }
-| "elif"   { ELIF } (* ADDED BY US *)
-| "else"   { ELSE }
-| "for"    { FOR }
-| "while"  { WHILE }
-| "return" { RETURN }
-| "int"    { INT }
-| "double" { DOUBLE } (* ADDED BY US *)
-| "bool"   { BOOL }
-| "shape"  { SHAPE } (* ADDED BY US *)
-| "void"   { VOID }
-| "true"   { TRUE }
-| "false"  { FALSE }
+| "/*"     		{ comment lexbuf }           (* Comments *)
+| '('      		{ LPAREN }
+| ')'      		{ RPAREN }
+| '{'      		{ LBRACE }
+| '}'      		{ RBRACE }
+| ';'      		{ SEMI }
+| ','      		{ COMMA }
+| '+'      		{ PLUS }
+| '-'      		{ MINUS }
+| '*'      		{ TIMES }
+| '/'      		{ DIVIDE }
+| '='      		{ ASSIGN }
+| '.'	   		{ DOT } 		(* ADDED BY US *)
+| "=="     		{ EQ }
+| "!="     		{ NEQ }
+| '<'      		{ LT }
+| "<="     		{ LEQ }
+| ">"      		{ GT }
+| ">="     		{ GEQ }
+| "&&"     		{ AND }
+| "||"     		{ OR }
+| "!"      		{ NOT }
+| "UU"	   		{ UNION } 		(* ADDED BY US *)
+| "NU"	   		{ INTERSECT } 	(* ADDED BY US *)
+| "if"     		{ IF }
+| "elif"   		{ ELIF } 		(* ADDED BY US *)
+| "else"   		{ ELSE }
+| "for"    		{ FOR }
+| "while"  		{ WHILE }
+| "return" 		{ RETURN }
+| "int"    		{ INT }
+| "double" 		{ DOUBLE } 		(* ADDED BY US *)
+| "bool"   		{ BOOL }
+| "Scene"  		{ SCENE } 		(* ADDED BY US *)
+| "SHAPE"  		{ SHAPE } 		(* ADDED BY US *)
+| "SPHERE" 		{ SPHERE } 		(* ADDED BY US *)
+| "CUBE"   		{ CUBE } 		(* ADDED BY US *)
+| "TETRA"  		{ TETRA } 		(* ADDED BY US *)
+| "CONE"  		{ CONE } 		(* ADDED BY US *)
+| "CYLINDER"  	{ CYLINDER } 	(* ADDED BY US *)
+| "void"   		{ VOID }
+| "true"   		{ TRUE }
+| "false"  		{ FALSE }
 | ['0'-'9']+ as lxm { LITERAL(int_of_string lxm) }
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
 | eof { EOF }
