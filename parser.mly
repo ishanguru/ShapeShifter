@@ -8,14 +8,9 @@ open Ast
 %token PLUS MINUS TIMES DIVIDE ASSIGN NOT UNION INTERSECT
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
 %token RETURN IF ELSE FOR WHILE INT BOOL VOID ELIF
-%token <int> LITERAL
+%token <int> INTEGER 
 %token <string> ID
 %token EOF
-
-(* 
-  YET TO ADD: 
-    Associativity for DOT, UNION, INTERSECT
-*)
 
 %nonassoc NOELSE
 %nonassoc ELSE
@@ -91,13 +86,7 @@ expr_opt:
 
 
 expr:
-    LITERAL          { Literal($1) }
-(*   |  
-       STRING_LITERAL { StringLiteral($1) } 
-      --> Associated TODOs = StringLiteral function, handling escape
-      --> We also need to beware of the escape characters we are using here, which I'm assuming will be " "
-      --> Must include how to handle escape character
-*)
+    INTEGER          { Integer($1) }
   | TRUE             { BoolLit(true) }
   | FALSE            { BoolLit(false) }
   | ID               { Id($1) }
