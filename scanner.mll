@@ -36,13 +36,12 @@ rule token = parse
   | "UU"            { UNION }       (* ADDED BY US *)
   | "NU"            { INTERSECT }   (* ADDED BY US *)
   | "if"            { IF }
-  | "elif"          { ELIF }        (* ADDED BY US *)
   | "else"          { ELSE }
   | "for"           { FOR }
   | "while"         { WHILE }
   | "return"        { RETURN }
   | "int"           { INT }
-  | "double"        { DOUBLE }      (* ADDED BY US *)
+  | "double"        { DBL }         (* ADDED BY US *)
   | "string"        { STRING }      (* ADDED BY US *)
   | "bool"          { BOOL }
   | "SHAPE"         { SHAPE }       (* ADDED BY US *)

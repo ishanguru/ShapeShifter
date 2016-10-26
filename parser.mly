@@ -1,15 +1,19 @@
-/* Ocamlyacc parser for MicroC */
+/* Ocamlyacc parser for ShapeShifter */
 
 %{
 open Ast
 %}
 
 %token SEMI LPAREN RPAREN LBRACE RBRACE COMMA DOT
-%token PLUS MINUS TIMES DIVIDE ASSIGN NOT UNION INTERSECT
+%token PLUS MINUS TIMES DIVIDE ASSIGN NOT
+%token UNION INTERSECT
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
-%token RETURN IF ELSE FOR WHILE INT BOOL VOID ELIF
+%token RETURN IF ELSE FOR WHILE INT BOOL DBL STRING VOID ELIF
+%token SHAPE SPHERE CUBE TETRA CONE CYLINDER
 %token <int> INTEGER 
 %token <string> ID
+%token <string> STR_LIT
+%token <float> DOUBLE
 %token EOF
 
 %nonassoc NOELSE
@@ -19,6 +23,7 @@ open Ast
 %left AND
 %left EQ NEQ
 %left LT GT LEQ GEQ
+%left UNION INTERSECT
 %left PLUS MINUS
 %left TIMES DIVIDE
 %right NOT NEG
@@ -29,47 +34,50 @@ open Ast
 %%
 
 program:
-  decls EOF { $1 }
+ | decls EOF { $1 }
 
 decls:
-   /* nothing */ { [], [] }
+ | /* nothing */ { [], [] }
  | decls vdecl { ($2 :: fst $1), snd $1 }
  | decls fdecl { fst $1, ($2 :: snd $1) }
 
 fdecl:
-   typ ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
+ | typ ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
      { { typ = $1;
-	 fname = $2;
-	 formals = $4;
-	 locals = List.rev $7;
-	 body = List.rev $8 } }
+         fname = $2;
+         formals = $4;
+         locals = List.rev $7;
+         body = List.rev $8 } }
 
 formals_opt:
-    /* nothing */ { [] }
+  | /* nothing */ { [] }
   | formal_list   { List.rev $1 }
 
 formal_list:
-    typ ID                   { [($1,$2)] }
+  | typ ID                   { [($1,$2)] }
   | formal_list COMMA typ ID { ($3,$4) :: $1 }
 
 typ:
-    INT { Int }
+  | INT { Int }
+  | DBL { Dbl }
   | BOOL { Bool }
+  | STRING { String }
+  | SHAPE { Shape }
   | VOID { Void }
 
 vdecl_list:
-    /* nothing */    { [] }
+  | /* nothing */    { [] }
   | vdecl_list vdecl { $2 :: $1 }
 
 vdecl:
    typ ID SEMI { ($1, $2) }
 
 stmt_list:
-    /* nothing */  { [] }
+  | /* nothing */  { [] }
   | stmt_list stmt { $2 :: $1 }
 
 stmt:
-    expr SEMI { Expr $1 }
+  | expr SEMI { Expr $1 }
   | RETURN SEMI { Return Noexpr }
   | RETURN expr SEMI { Return $2 }
   | LBRACE stmt_list RBRACE { Block(List.rev $2) }
@@ -80,13 +88,17 @@ stmt:
   | WHILE LPAREN expr RPAREN stmt { While($3, $5) }
 
 expr_opt:
-    /* nothing */ { Noexpr }
+  | /* nothing */ { Noexpr }
   | expr          { $1 }
 
-
-
 expr:
-    INTEGER          { Integer($1) }
+  | INTEGER          { Integer($1) }
+  | DOUBLE           { Double($1) }
+  | STR_LIT          { StrLit($1) }
+  | SPHERE           { Sphere }
+  | CUBE             { Cube }
+  | TETRA            { Cone }
+  | CYLINDER         { Cylinder }
   | TRUE             { BoolLit(true) }
   | FALSE            { BoolLit(false) }
   | ID               { Id($1) }
@@ -102,6 +114,8 @@ expr:
   | expr GEQ    expr { Binop($1, Geq,   $3) }
   | expr AND    expr { Binop($1, And,   $3) }
   | expr OR     expr { Binop($1, Or,    $3) }
+  | expr UNION  expr { Binop($1, Union, $3) }
+  | expr INTERSECT expr { Binop($1, Intersect, $3) }
   | MINUS expr %prec NEG { Unop(Neg, $2) }
   | NOT expr         { Unop(Not, $2) }
   | ID ASSIGN expr   { Assign($1, $3) }
