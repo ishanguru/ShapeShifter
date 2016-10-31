@@ -1,0 +1,15 @@
+
+/* 
+    Test that the return type for Union is Shape.
+*/
+
+Scene {
+
+    Sphere sph1 = SPHERE; 
+    Cube cu1 = CUBE; 
+    Shape un1 = Union(sph1, cu1); // Okay 
+    Sphere un2 = Union(sph1, cu1); //NOT OKAY
+    Cone un3 = Union(un1, sph1); // NOT OKAY
+    Cube un4 = Union(CUBE, CUBE); // NOT OKAY
+    
+}

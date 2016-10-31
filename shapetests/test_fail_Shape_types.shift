@@ -1,0 +1,17 @@
+
+/*
+    Test the valid and invalid generic / specific Shape combinations
+    using the Copy function. 
+*/
+
+Scene {
+
+    Sphere sph = SPHERE; 
+    Shape sh = SPHERE; 
+    Shape copy1 = Copy(sph); // okay Shape <- Sphere 
+    Shape copy2 = Copy(sh); // okay Shape <- Shape
+    Sphere copy3 = Copy(sph); // okay Sphere <- Sphere 
+    Sphere copy4 = Copy(sh); // NOT OKAY
+
+
+}

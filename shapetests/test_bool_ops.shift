@@ -1,0 +1,27 @@
+
+
+Scene {
+
+Sphere s1 = SPHERE; 
+Sphere s2 = SPHERE; 
+Translate(s2, 0.0, 1.0, 0.0);
+Sphere s3 = Copy(s2); 
+Reflect(s3, 0.0, 1.0, 0.0); 
+Shape s4 = CUBE; 
+Shape s5 = CONE; 
+
+Shape scombo1 = s1 UU s2 UU s3 UU s4 UU s5; 
+
+Shape[]  sarray = [s1, s2, s3, s4, s5]; 
+
+Shape scombo2 = Union(sarray); 
+
+Shape sin1 = Intersect(sarray);
+
+Shape sin2 = s1 IU s2 IU s3 IU s4 IU scombo2; 
+
+Shape sdiff1 = s1 DU s2 DU s3; 
+
+ 
+
+}
