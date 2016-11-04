@@ -10,7 +10,7 @@ open Ast
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
 %token RETURN IF ELSE FOR WHILE BREAK
 %token INT BOOL DBL STRING VOID
-%token SHAPE SPHERE CUBE TETRA CONE CYLINDER
+%token SHAPE
 %token SPHERE_OBJ CUBE_OBJ CYLINDER_OBJ TETRA_OBJ CONE_OBJ
 %token <int> INT_LIT
 %token <string> ID
@@ -66,11 +66,6 @@ typ:
   | BOOL { Bool }
   | STRING { String }
   | SHAPE { Shape }
-  | SPHERE { Sphere }
-  | CUBE { Cube }
-  | TETRA { Tetra }
-  | CONE { Cone }
-  | CYLINDER { Cylinder }
   | VOID { Void }
 
 vdecl_list:

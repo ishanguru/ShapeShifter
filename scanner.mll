@@ -49,11 +49,6 @@ rule token = parse
   | "string"        { STRING }      (* ADDED BY US *)
   | "bool"          { BOOL }
   | "Shape"         { SHAPE }       (* ADDED BY US *)
-  | "Sphere"        { SPHERE }      (* ADDED BY US *)
-  | "Cube"          { CUBE }        (* ADDED BY US *)
-  | "Tetra"         { TETRA }       (* ADDED BY US *)
-  | "Cone"          { CONE }        (* ADDED BY US *)
-  | "Cylinder"      { CYLINDER }    (* ADDED BY US *)
   | "SPHERE"        { SPHERE_OBJ }  (* ADDED BY US *)
   | "CUBE"          { CUBE_OBJ }    (* ADDED BY US *)
   | "CYLINDER"      { CYLINDER_OBJ } (* ADDED BY US *)
