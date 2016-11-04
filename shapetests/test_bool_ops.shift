@@ -12,6 +12,8 @@ Shape scombo2;
 Shape sin1;
 Shape sin2;
 Shape sdiff1;
+Shape[] sarray;
+
 
 s1 = SPHERE; 
 s2 = SPHERE; 
@@ -23,7 +25,7 @@ s5 = CONE;
 
 scombo1 = s1 UU s2 UU s3 UU s4 UU s5; 
 
-Shape[] sarray = [s1, s2, s3, s4, s5]; 
+sarray = [s1, s2, s3, s4, s5]; 
 
 scombo2 = Union(sarray); 
 
