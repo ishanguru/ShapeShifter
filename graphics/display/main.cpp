@@ -6,6 +6,7 @@
 #include <cmath>
 #include <algorithm> // why is min/max in here??
 
+
 #include "files.h"
 #include "cork.h"
 
@@ -94,14 +95,31 @@ void initOpenGLandGLUT(int argc, char **argv)
 
 }
 
-void loadMesh(string fileName, CorkTriMesh *out)
+void loadMesh(std::string fileName, CorkTriMesh *out)
 {
-    Files::FileMesh filemesh; 
-    if(Files::readTriMesh(fileName, &filemesh) > 0) {
-        fprintf(stderr, "Unable to load file from $s\n", fileName); 
+    Files::FileMesh fileMesh; 
+    if(Files::readTriMesh(fileName, &fileMesh) > 0) {
+        fprintf(stderr, "Unable to load file from %s\n", fileName.c_str()); 
         exit(1); 
     }
-    file2corktrimesh(filemesh, out); 
+
+    // Copy data from FileMesh
+    out->n_vertices = fileMesh.vertices.size(); 
+    out->n_triangles = fileMesh.triangles.size(); 
+    
+    out->triangles = new uint[(out->n_triangles) * 3]; 
+    out->vertices = new float[(out->n_vertices) * 3]; 
+    for (uint i = 0; i < out->n_triangles; ++i) {
+        (out->triangles)[3*i+0] = fileMesh.triangles[i].a; 
+        (out->triangles)[3*i+1] = fileMesh.triangles[i].b; 
+        (out->triangles)[3*i+2] = fileMesh.triangles[i].c; 
+    }
+
+    for (uint i = 0; i < out->n_vertices; ++i) {
+        (out->vertices)[3*i+0] = fileMesh.vertices[i].pos.x; 
+        (out->vertices)[3*i+1] = fileMesh.vertices[i].pos.y; 
+        (out->vertices)[3*i+2] = fileMesh.vertices[i].pos.z; 
+    }
 
 }
 

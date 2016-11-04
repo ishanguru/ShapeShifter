@@ -1,10 +1,10 @@
 
 CC := g++
-CFLAGS := -g -Wall
+CPPFLAGS := -g -Wall -std=c++11
 INCLUDES := -lglut -lGLU -lGL -lm
 
 CORKSUBDIRS := util file_formats math isct mesh rawmesh accel
-CORKINCLUDES := ../cork/src $(addprefix -I ../cork/src/,$(CORKSUBDIRS))
+CORKINCLUDES := -I ../cork/src $(addprefix -I ../cork/src/,$(CORKSUBDIRS)) -L ../cork/lib -llibcork
 
 INCLUDES := $(INCLUDES) $(CORKINCLUDES)
 
@@ -13,10 +13,10 @@ INCLUDES := $(INCLUDES) $(CORKINCLUDES)
 EXENAME := sshiftdisplay
 
 $(EXENAME): main.o
-	$(CC) $(CFLAGS) -o $(EXENAME) main.o $(INCLUDES)
+	$(CC) $(CPPFLAGS) -o $(EXENAME) main.o $(INCLUDES)
 
 main.o:: 
-	$(CC) $(CFLAGS) -g -c main.cpp $(INCLUDES)
+	$(CC) $(CPPFLAGS) -c main.cpp $(INCLUDES)
 
 .PHONY: run
 run: 
