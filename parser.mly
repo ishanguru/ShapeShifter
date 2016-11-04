@@ -4,16 +4,19 @@
 open Ast
 %}
 
-%token SEMI LPAREN RPAREN LBRACE RBRACE COMMA DOT
+%token SEMI LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK COMMA
 %token PLUS MINUS TIMES DIVIDE ASSIGN NOT
-%token UNION INTERSECT
+%token UNION INTERSECT DIFFERENCE
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
-%token RETURN IF ELSE FOR WHILE INT BOOL DBL STRING VOID ELIF
+%token RETURN IF ELSE FOR WHILE BREAK
+%token INT BOOL DBL STRING VOID
 %token SHAPE SPHERE CUBE TETRA CONE CYLINDER
-%token <int> INTEGER 
+%token SPHERE_OBJ CUBE_OBJ CYLINDER_OBJ TETRA_OBJ CONE_OBJ
+%token <int> INT_LIT
 %token <string> ID
 %token <string> STR_LIT
-%token <float> DOUBLE
+%token <float> DBL_LIT
+%token NULL
 %token EOF
 
 %nonassoc NOELSE
@@ -23,7 +26,7 @@ open Ast
 %left AND
 %left EQ NEQ
 %left LT GT LEQ GEQ
-%left UNION INTERSECT
+%left UNION INTERSECT DIFFERENCE
 %left PLUS MINUS
 %left TIMES DIVIDE
 %right NOT NEG
@@ -63,6 +66,11 @@ typ:
   | BOOL { Bool }
   | STRING { String }
   | SHAPE { Shape }
+  | SPHERE { Sphere }
+  | CUBE { Cube }
+  | TETRA { Tetra }
+  | CONE { Cone }
+  | CYLINDER { Cylinder }
   | VOID { Void }
 
 vdecl_list:
@@ -86,21 +94,24 @@ stmt:
   | FOR LPAREN expr_opt SEMI expr SEMI expr_opt RPAREN stmt
      { For($3, $5, $7, $9) }
   | WHILE LPAREN expr RPAREN stmt { While($3, $5) }
+  | BREAK SEMI { Break }
 
 expr_opt:
   | /* nothing */ { Noexpr }
   | expr          { $1 }
 
 expr:
-  | INTEGER          { Integer($1) }
-  | DOUBLE           { Double($1) }
+  | INT_LIT          { Integer($1) }
+  | DBL_LIT          { Double($1) }
   | STR_LIT          { StrLit($1) }
-  | SPHERE           { Sphere }
-  | CUBE             { Cube }
-  | TETRA            { Cone }
-  | CYLINDER         { Cylinder }
+  | SPHERE_OBJ       { SphereObj }
+  | CUBE_OBJ         { CubeObj }
+  | CYLINDER_OBJ     { CylinderObj }
+  | TETRA_OBJ        { TetraObj }
+  | CONE_OBJ         { ConeObj }
   | TRUE             { BoolLit(true) }
   | FALSE            { BoolLit(false) }
+  | NULL             { Null }
   | ID               { Id($1) }
   | expr PLUS   expr { Binop($1, Add,   $3) }
   | expr MINUS  expr { Binop($1, Sub,   $3) }
@@ -116,6 +127,7 @@ expr:
   | expr OR     expr { Binop($1, Or,    $3) }
   | expr UNION  expr { Binop($1, Union, $3) }
   | expr INTERSECT expr { Binop($1, Intersect, $3) }
+  | expr DIFFERENCE expr { Binop($1, Difference, $3) }
   | MINUS expr %prec NEG { Unop(Neg, $2) }
   | NOT expr         { Unop(Not, $2) }
   | ID ASSIGN expr   { Assign($1, $3) }
@@ -123,7 +135,7 @@ expr:
   | LPAREN expr RPAREN { $2 }
 
 actuals_opt:
-    /* nothing */ { [] }
+  | /* nothing */ { [] }
   | actuals_list  { List.rev $1 }
 
 actuals_list:
