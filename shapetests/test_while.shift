@@ -1,8 +1,8 @@
-
 // Have a while loop
 
-Scene {
-    int i = 0; 
+void scene() {
+    int i 
+    i = 0; 
     while (i < 3) {
         print(i); 
     }

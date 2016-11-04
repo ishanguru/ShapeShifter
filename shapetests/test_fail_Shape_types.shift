@@ -4,14 +4,21 @@
     using the Copy function. 
 */
 
-Scene {
+void scene() {
 
-    Sphere sph = SPHERE; 
-    Shape sh = SPHERE; 
-    Shape copy1 = Copy(sph); // okay Shape <- Sphere 
-    Shape copy2 = Copy(sh); // okay Shape <- Shape
-    Sphere copy3 = Copy(sph); // okay Sphere <- Sphere 
-    Sphere copy4 = Copy(sh); // NOT OKAY
+	Sphere sph;
+	Shape sh;
+	Shape copy1;
+	Shape copy2;
+	Sphere copy3;
+	Sphere copy4;
+
+    sph = SPHERE; 
+    sh = SPHERE; 
+    copy1 = Copy(sph); // okay Shape <- Sphere 
+    copy2 = Copy(sh); // okay Shape <- Shape
+    copy3 = Copy(sph); // okay Sphere <- Sphere 
+    copy4 = Copy(sh); // NOT OKAY
 
 
 }

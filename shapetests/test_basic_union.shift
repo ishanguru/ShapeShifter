@@ -1,13 +1,17 @@
 // Union 2 spheres
 
-Scene {
-    Shape sph1 = SPHERE; 
-    Sphere sph2 = SPHERE; 
+void scene() {
+    Shape sph1;
+    Sphere sph2;
+    Shape sphu;
+
+    sph1 = SPHERE; 
+    sph2 = SPHERE; 
 
     Translate(sph1, 0.0, 0.5, 0.0);
     Translate(sph2, 0.0, -0.5, 0.0);
 
-    Shape sphu = Union(sph1, sph2);
+    sphu = Union(sph1, sph2);
 
 }
 

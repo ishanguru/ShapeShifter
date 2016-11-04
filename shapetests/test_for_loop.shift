@@ -1,14 +1,18 @@
 
 // Make a 5 layer pyramid using a for loop
 
-Scene {
-
-    Shape base = CUBE; 
+void scene() {
+    Shape base;
     int i; 
+    Shape prev;
+    Shape next;
+
+    base = CUBE; 
+    
     // Scale: 1, .9, .8, .7, .6
-    Shape prev = Copy(base);  
+    prev = Copy(base);  
     for (i = 1; i < 5; ++i ) {
-        Shape next = Copy(prev); 
+        next = Copy(prev); 
         Scale(next, (1 - i * 0.1), 
                     (1 - i * 0.1),
                     (1 - i * 0.1); 

@@ -1,11 +1,13 @@
-
-
 // Make sure that doubles are recognized
 
-Scene {
-    double a = 10.0; 
-    double b = -2.0; 
-    double c = b / a; 
+void scene() {
+    double a;
+    double b;
+    double c;
+
+    a = 10.0; 
+    b = -2.0; 
+    c = b / a; 
     print(c); 
 
 }

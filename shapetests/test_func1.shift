@@ -2,11 +2,13 @@
 // Call a function that returns a scaled sphere 
 
 Shape function sphereFunc(double r) {
-    Shape sph = SPHERE;
+	Shape sph;
+   	sph = SPHERE;
     Scale(sph, r, r, r);
     return sph; 
 }
 
-Scene {
-    Shape sh = sphereFunc(r); 
+void scene() {
+    Shape sh;
+    sh = sphereFunc(r); 
 }

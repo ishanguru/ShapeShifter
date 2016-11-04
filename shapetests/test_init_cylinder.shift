@@ -1,6 +1,8 @@
 // Initialize a cylinder
 
-Scene {
-    Shape cyl = CYLINDER; 
-    Cylinder cy2 = CYLINDER;
+void scene() {
+    Shape cyl;
+    Shape cy2;
+    cyl = CYLINDER; 
+    cy2 = CYLINDER;
 }

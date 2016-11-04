@@ -3,13 +3,20 @@
     Test that the return type for Intersect is Shape.
 */
 
-Scene {
+void scene() {
+	
+	Sphere sph1;
+	Cube cu1;
+	Shape un1;
+	Sphere un2;
+	Cone un3;
+	Cube un4;
 
-    Sphere sph1 = SPHERE; 
-    Cube cu1 = CUBE; 
-    Shape un1 = Intersect(sph1, cu1); // Okay 
-    Sphere un2 = Intersect(sph1, cu1); //NOT OKAY
-    Cone un3 = Intersect(un1, sph1); // NOT OKAY
-    Cube un4 = Intersect(CUBE, CUBE); // NOT OKAY
+    sph1 = SPHERE; 
+    cu1 = CUBE; 
+    un1 = Intersect(sph1, cu1); // Okay 
+    un2 = Intersect(sph1, cu1); //NOT OKAY
+    un3 = Intersect(un1, sph1); // NOT OKAY
+    un4 = Intersect(CUBE, CUBE); // NOT OKAY
     
 }
