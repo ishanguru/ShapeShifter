@@ -1,7 +1,7 @@
 // Have a while loop
 
 void scene() {
-    int i 
+    int i;
     i = 0; 
     while (i < 3) {
         print(i); 

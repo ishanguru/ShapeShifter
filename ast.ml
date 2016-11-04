@@ -12,7 +12,7 @@ type typ = Int | Dbl | Bool | String | Shape | Sphere | Cube |
 type bind = typ * string
 
 type expr =
-  | IntLit of int
+    IntLit of int
   | DblLit of float
   | StrLit of string
   | BoolLit of bool
@@ -30,7 +30,7 @@ type expr =
   | Noexpr
 
 type stmt =
-  | Block of stmt list
+    Block of stmt list
   | Expr of expr
   | Return of expr
   | If of expr * stmt * stmt
