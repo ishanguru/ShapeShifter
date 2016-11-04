@@ -1,0 +1,10 @@
+
+This folder contains the graphics and mesh-editing backend for Shapeshifter. 
+
+It uses a (soon-to-be expanded) version of the Cork boolean library for the 
+underlying mesh representation and modification. 
+
+For display, OpenGL is used in conjunction with the utility toolkit glut. 
+
+
+
