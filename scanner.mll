@@ -11,7 +11,8 @@ let id = ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '0'-'9' '_']*
 
 rule token = parse
   | whitespace      { token lexbuf } (* Whitespace *)
-  | "/*"            { comment lexbuf } (* Comments *)
+  | "//"            { single_line_comment lexbuf }
+  | "/*"            { multi_line_comment lexbuf } (* Comments *)
   | '('             { LPAREN }
   | ')'             { RPAREN }
   | '{'             { LBRACE }
@@ -69,6 +70,10 @@ rule token = parse
   | _ as char       { raise (Failure("illegal character " ^ Char.escaped char)) }
   | eof             { EOF }
 
-and comment = parse
+and single_line_comment = parse
+  | '\n' { token lexbuf }
+  | _    { single_line_comment lexbuf }
+
+and multi_line_comment = parse
   | "*/" { token lexbuf }
-  | _    { comment lexbuf }
+  | _    { multi_line_comment lexbuf }
