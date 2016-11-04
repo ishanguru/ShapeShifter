@@ -6,6 +6,9 @@
 #include <cmath>
 #include <algorithm> // why is min/max in here??
 
+#include "files.h"
+#include "cork.h"
+
 int windowWidth = 600; 
 int windowHeight = 500; 
 
@@ -91,10 +94,28 @@ void initOpenGLandGLUT(int argc, char **argv)
 
 }
 
+void loadMesh(string fileName, CorkTriMesh *out)
+{
+    Files::FileMesh filemesh; 
+    if(Files::readTriMesh(fileName, &filemesh) > 0) {
+        fprintf(stderr, "Unable to load file from $s\n", fileName); 
+        exit(1); 
+    }
+    file2corktrimesh(filemesh, out); 
+
+}
+
+
 int main(int argc, char **argv)
 {
+    if (argc != 2) {
+        fprintf(stdout, "usage: sshapedisplay [shapefile.OFF]\n");
+        return 0;
+    }
+    
+    // read the thing
+    CorkTriMesh in; 
+
     initOpenGLandGLUT(argc, argv); 
     glutMainLoop(); 
-
-
 }
