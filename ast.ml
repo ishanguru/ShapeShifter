@@ -1,18 +1,27 @@
 (* Abstract Syntax Tree and functions for printing it *)
 
-type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
-          And | Or | Union | Intsct
+type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq |
+          Greater |Geq | And | Or | Union | Intersect |
+          Difference
 
 type uop = Neg | Not
 
-type rec typ = Int | Bool | Double | Shape | Char | Array[typ] | Void (* Here is where we would have arrays and shapes, as rypes of types. e.g. Array[typ] | Shape *)
+type typ = Int | Dbl | Bool | String | Shape | Sphere | Cube |
+           Tetra | Cone | Cylinder | Void
 
 type bind = typ * string
 
 type expr =
-    Literal of int
+  | IntLit of int
+  | DblLit of float
+  | StrLit of string
   | BoolLit of bool
-  | StringLit of string (* ADDED BY US *)
+  | SphereObj
+  | CubeObj
+  | CylinderObj
+  | TetraObj
+  | ConeObj
+  | Null
   | Id of string
   | Binop of expr * op * expr
   | Unop of uop * expr
@@ -21,12 +30,13 @@ type expr =
   | Noexpr
 
 type stmt =
-    Block of stmt list
+  | Block of stmt list
   | Expr of expr
   | Return of expr
   | If of expr * stmt * stmt
   | For of expr * expr * expr * stmt
   | While of expr * stmt
+  | Break
 
 type func_decl = {
     typ : typ;
@@ -53,18 +63,26 @@ let string_of_op = function
   | Geq -> ">="
   | And -> "&&"
   | Or -> "||"
-  | Union -> "UU" (* ADDED BY US *)
-  | Intsct -> "NU" (* ADDED BY US *)
+  | Union -> "UN" (* ADDED BY US *)
+  | Intersect -> "IN" (* ADDED BY US *)
+  | Difference -> "DI" (* ADDED BY US *)
 
 let string_of_uop = function
     Neg -> "-"
   | Not -> "!"
 
 let rec string_of_expr = function
-    Literal(l) -> string_of_int l
+  | IntLit(l) -> string_of_int l
+  | DblLit(l) -> string_of_float l
+  | StrLit(l) -> l
   | BoolLit(true) -> "true"
   | BoolLit(false) -> "false"
-  | StringLit(s) -> "\""^s^"\"" (* ADDED BY US *)
+  | SphereObj -> "SPHERE"
+  | CubeObj -> "CUBE"
+  | CylinderObj -> "CYLINDER"
+  | TetraObj -> "TETRA"
+  | ConeObj -> "CONE"
+  | Null -> "NULL"
   | Id(s) -> s
   | Binop(e1, o, e2) ->
       string_of_expr e1 ^ " " ^ string_of_op o ^ " " ^ string_of_expr e2
@@ -86,14 +104,19 @@ let rec string_of_stmt = function
       "for (" ^ string_of_expr e1  ^ " ; " ^ string_of_expr e2 ^ " ; " ^
       string_of_expr e3  ^ ") " ^ string_of_stmt s
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
+  | Break -> "break"
 
-let rec string_of_typ = function
+let string_of_typ = function
     Int -> "int"
   | Bool -> "bool"
-  | Double -> "double" (* ADDED BY US *)
-  | Char -> "char" (* ADDED BY US *)
-  | Shape -> "shape" (* ADDED BY US *)
-  | Array[string_of_typ] -> "array" (* ADDED BY US *)
+  | Dbl -> "double"
+  | String -> "string"
+  | Shape -> "Shape"
+  | Sphere -> "Sphere"
+  | Cube -> "Cube"
+  | Tetra -> "Tetra"
+  | Cone -> "Cone"
+  | Cylinder -> "Cylinder"
   | Void -> "void"
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"

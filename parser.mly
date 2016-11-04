@@ -101,8 +101,8 @@ expr_opt:
   | expr          { $1 }
 
 expr:
-  | INT_LIT          { Integer($1) }
-  | DBL_LIT          { Double($1) }
+  | INT_LIT          { IntLit($1) }
+  | DBL_LIT          { DblLit($1) }
   | STR_LIT          { StrLit($1) }
   | SPHERE_OBJ       { SphereObj }
   | CUBE_OBJ         { CubeObj }
