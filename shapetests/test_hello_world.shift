@@ -1,9 +1,4 @@
-
-// Test: Hello world
-
-Scene {
-    
+void scene() {
     print("Hello world!");
-
 }
 
