@@ -35,18 +35,18 @@ module StringMap = Map.Make(String)
 
 let translate (globals, functions) =
   let context = L.global_context () in
-  let the_module = L.create_module context "MicroC"
+  let the_module = L.create_module context "ShapeShifter"
   and i32_t  = L.i32_type  context
   and i8_t   = L.i8_type   context
   and i1_t   = L.i1_type   context
   and void_t = L.void_type context 
-  and double_type = L.double_type context in
+  and double_t = L.double_type context in
 
   let ltype_of_typ = function
       A.Int -> i32_t
     | A.Bool -> i1_t
     | A.Void -> void_t
-    | A.Dbl -> double_type in
+    | A.Dbl -> double_t in
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars =
@@ -75,6 +75,7 @@ let translate (globals, functions) =
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
+    let flt_format_str = L.build_global_stringptr "%f\n" "fmt" builder in
     
     (* Construct the function's "locals": formal arguments and locally
        declared variables.  Allocate each on the stack, initialize their
@@ -100,9 +101,9 @@ let translate (globals, functions) =
 
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
-      | A.DblLit d -> L.const_float double_type d
+      | A.DblLit d -> L.const_float double_t d
       
-      | A.StrLit s -> L.build_global_stringptr "" builder
+      (* | A.StrLit s -> L.build_global_stringptr "" builder *)
 	  
 	  | A.IntLit i -> L.const_int i32_t i
       
@@ -170,7 +171,7 @@ let translate (globals, functions) =
       			let str = L.build_in_bounds_gep string_head [| zero_const |] "printf" builder in
       				L.build_call printf_func [| str |] "printf" builder
 
-      		| A.DblLit d -> L.build_call printf_func [| float_format_str ; (expr builder e) |]
+      		| A.DblLit d -> L.build_call printf_func [| flt_format_str ; (expr builder e) |]
 	    		"printf" builder
       		| A.IntLit i -> L.build_call printf_func [| int_format_str ; (expr builder e) |]
 	    		"printf" builder
@@ -198,36 +199,36 @@ let translate (globals, functions) =
       | A.Expr e -> ignore (expr builder e); builder
       | A.Return e -> ignore (match fdecl.A.typ with
 	  A.Void -> L.build_ret_void builder
-	| _ -> L.build_ret (expr builder e) builder); builder
+	  | _ -> L.build_ret (expr builder e) builder); builder
       | A.If (predicate, then_stmt, else_stmt) ->
-         let bool_val = expr builder predicate in
-	 let merge_bb = L.append_block context "merge" the_function in
+			let bool_val = expr builder predicate in
+			let merge_bb = L.append_block context "merge" the_function in
 
-	 let then_bb = L.append_block context "then" the_function in
-	 add_terminal (stmt (L.builder_at_end context then_bb) then_stmt)
-	   (L.build_br merge_bb);
+			let then_bb = L.append_block context "then" the_function in
+			add_terminal (stmt (L.builder_at_end context then_bb) then_stmt)
+			(L.build_br merge_bb);
 
-	 let else_bb = L.append_block context "else" the_function in
-	 add_terminal (stmt (L.builder_at_end context else_bb) else_stmt)
-	   (L.build_br merge_bb);
+			let else_bb = L.append_block context "else" the_function in
+			add_terminal (stmt (L.builder_at_end context else_bb) else_stmt)
+			(L.build_br merge_bb);
 
-	 ignore (L.build_cond_br bool_val then_bb else_bb builder);
-	 L.builder_at_end context merge_bb
+			ignore (L.build_cond_br bool_val then_bb else_bb builder);
+			L.builder_at_end context merge_bb
 
       | A.While (predicate, body) ->
-	  let pred_bb = L.append_block context "while" the_function in
-	  ignore (L.build_br pred_bb builder);
+		  let pred_bb = L.append_block context "while" the_function in
+		  ignore (L.build_br pred_bb builder);
 
-	  let body_bb = L.append_block context "while_body" the_function in
-	  add_terminal (stmt (L.builder_at_end context body_bb) body)
-	    (L.build_br pred_bb);
+		  let body_bb = L.append_block context "while_body" the_function in
+		  add_terminal (stmt (L.builder_at_end context body_bb) body)
+		    (L.build_br pred_bb);
 
-	  let pred_builder = L.builder_at_end context pred_bb in
-	  let bool_val = expr pred_builder predicate in
+		  let pred_builder = L.builder_at_end context pred_bb in
+		  let bool_val = expr pred_builder predicate in
 
-	  let merge_bb = L.append_block context "merge" the_function in
-	  ignore (L.build_cond_br bool_val body_bb merge_bb pred_builder);
-	  L.builder_at_end context merge_bb
+		  let merge_bb = L.append_block context "merge" the_function in
+		  ignore (L.build_cond_br bool_val body_bb merge_bb pred_builder);
+		  L.builder_at_end context merge_bb
 
       | A.For (e1, e2, e3, body) -> stmt builder
 	    ( A.Block [A.Expr e1 ; A.While (e2, A.Block [body ; A.Expr e3]) ] )
