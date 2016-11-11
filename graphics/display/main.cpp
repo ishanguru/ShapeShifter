@@ -94,7 +94,7 @@ void uploadMeshData()
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
-    glMatrixMode(GL_MODELVIEW);
+    glMatrixMode(GL_PROJECTION);
     //glLoadIdentity(); 
 
     // Draw axes
@@ -116,11 +116,14 @@ void display()
     CHECK_GL(glEnableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glVertexPointer(3, GL_FLOAT, 0, 0)); 
 
-//    CHECK_GL(glDrawArrays(GL_TRIANGLES, 0, 3*shape.n_triangles)); 
+    //CHECK_GL(glDrawArrays(GL_TRIANGLES, 0, 3*shape.n_triangles)); 
 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
     CHECK_GL(glDrawElements(GL_TRIANGLES, shape.n_triangles*3, GL_UNSIGNED_INT, (void*)0));
 
+    //CHECK_GL(glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void *)0)); 
+
+    CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     CHECK_GL(glDisableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0)); 
 
