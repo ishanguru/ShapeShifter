@@ -46,6 +46,7 @@ let translate (globals, functions) =
       A.Int -> i32_t
     | A.Bool -> i1_t
     | A.Void -> void_t
+    (* | A.String ->  *)
     | A.Dbl -> double_t in
 
   (* Declare each global variable; remember its value in a map *)
@@ -103,7 +104,7 @@ let translate (globals, functions) =
     let rec expr builder = function
       | A.DblLit d -> L.const_float double_t d
       
-      (* | A.StrLit s -> L.build_global_stringptr "" builder *)
+      | A.StrLit s -> L.build_global_stringptr s "" builder
 	  
 	  | A.IntLit i -> L.const_int i32_t i
       
