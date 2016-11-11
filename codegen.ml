@@ -17,6 +17,22 @@ module A = Ast
 
 module StringMap = Map.Make(String)
 
+(* 
+
+	The types that we need to add: 
+
+	Double
+	String
+
+	Shape
+	Sphere
+	Cube
+	Tetra
+	Cone
+	Cylinder
+
+ *)
+
 let translate (globals, functions) =
   let context = L.global_context () in
   let the_module = L.create_module context "MicroC"
@@ -82,6 +98,7 @@ let translate (globals, functions) =
 
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
+      | A.DblLit d -> L.const_float dbl d
 	  | A.IntLit i -> L.const_int i32_t i
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | A.Noexpr -> L.const_int i32_t 0
