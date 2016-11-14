@@ -42,6 +42,8 @@ struct CorkTriMesh
 
 void freeCorkTriMesh(CorkTriMesh *mesh);
 
+void translateCork(CorkTriMesh *mesh, float x, float y, float z);
+
 // the inputs to Boolean operations must be "solid":
 //  -   closed (aka. watertight; see comment at bottom)
 //  -   non-self-intersecting

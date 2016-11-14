@@ -104,6 +104,19 @@ struct CorkTriangle :
     }
 };
 
+
+void translateCork(CorkTriMesh *mesh, float x, float y, float z) 
+{
+    for (uint i = 0; i < mesh->n_vertices; ++i) {
+        mesh->vertices[i*3] += x; 
+        mesh->vertices[i*3+1] += y; 
+        mesh->vertices[i*3+2] += z; 
+    }
+}
+
+
+
+
 //using RawCorkMesh = RawMesh<CorkVertex, CorkTriangle>;
 //using CorkMesh = Mesh<CorkVertex, CorkTriangle>;
 typedef RawMesh<CorkVertex, CorkTriangle>   RawCorkMesh;

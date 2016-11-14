@@ -39,6 +39,7 @@ using std::stringstream;
 using std::string;
 
 using std::ostream;
+#include <stdlib.h>
 
 #include "cork.h"
 
@@ -283,6 +284,37 @@ int main(int argc, char *argv[])
         delete[] in.vertices;
         delete[] in.triangles;
     });
+    cmds.regCmd("translate", 
+    "-translate in x y z    Translate the input shape by x,y,z and \n"
+    "                       and write the result back to the same file", 
+    [](std::vector<string>::iterator &args, 
+        const std::vector<string>::iterator &end) {
+        CorkTriMesh in, out; 
+        if(args == end) { cerr << "too few args for translate" << endl; exit(1); }
+        string filename = *args; 
+        loadMesh(*args, &in); 
+        args++; 
+    
+        float x, y, z; 
+        if(args == end) { cerr << "too few args for translate" << endl; exit(1); }
+        x = strtof((*args).c_str(), NULL);
+        args++;
+        if(args == end) { cerr << "too few args for translate" << endl; exit(1); }
+        y = strtof((*args).c_str(), NULL);
+        args++; 
+        if(args == end) { cerr << "too few args for translate" << endl; exit(1); }
+        z = strtof((*args).c_str(), NULL);
+        args++;
+ 
+        translateCork(&in, x, y, z);  
+
+        saveMesh(filename, in);
+        delete[] in.vertices; 
+        delete[] in.triangles; 
+        
+        
+    });    
+
     cmds.regCmd("union",
     "-union in0 in1 out     Compute the Boolean union of in0 and in1,\n"
     "                       and output the result",

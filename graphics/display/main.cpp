@@ -44,6 +44,7 @@ CorkTriMesh shape;
 GLuint vbo; // vertex buffer object, stores triangle vertex info
 GLuint ibo; // index buffer object, stores indices of triangles
 
+float xTrans, yTrans, zTrans; 
 void reshape(int w, int h)
 {
     windowWidth = std::max(w, 1); 
@@ -216,9 +217,11 @@ int main(int argc, char **argv)
     initOpenGLandGLUT(argc, argv); 
 
     loadMesh(argv[1], &shape);    
-
+    
     uploadMeshData(); 
-   
+  
+        
+ 
     glutMainLoop(); 
    
 }
