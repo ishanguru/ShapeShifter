@@ -1,2 +1,7 @@
 _build/
 *.swp
+*.off
+graphics/cork/bin
+graphics/display/sshiftdisplay
+*.o
+
