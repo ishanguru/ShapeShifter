@@ -104,7 +104,38 @@ struct CorkTriangle :
     }
 };
 
+// SHAPESHIFTER
 
+// Multiply a 3x3 matrix and a 3-dim vector
+void matMult3(float *mat, float *vin, float *vout) 
+{
+    vout[0] = mat[0]*vin[0] + mat[1]*vin[1] + mat[2]*vin[2]; 
+    vout[1] = mat[3]*vin[0] + mat[4]*vin[1] + mat[5]*vin[2]; 
+    vout[2] = mat[6]*vin[0] + mat[7]*vin[1] + mat[8]*vin[2]; 
+}
+
+void reflectCork(CorkTriMesh *mesh, float x, float y, float z)
+{
+    
+
+}
+
+void rotateCork(CorkTriMesh *mesh, float x, float y, float z)
+{
+
+}
+
+void scaleCork(CorkTriMesh *mesh, float x, float y, float z)
+{
+    float scale[] = {x, 0, 0, 0, y, 0, 0, 0, z};
+    float ppos[3]; 
+    for (uint i = 0; i < mesh->n_vertices; ++i) {
+        ppos[0] = mesh->vertices[i*3]; 
+        ppos[1] = mesh->vertices[i*3+1];
+        ppos[2] = mesh->vertices[i*3+2];
+        matMult3(scale, ppos, &(mesh->vertices[i*3])); 
+    } 
+}
 void translateCork(CorkTriMesh *mesh, float x, float y, float z) 
 {
     for (uint i = 0; i < mesh->n_vertices; ++i) {
@@ -115,6 +146,7 @@ void translateCork(CorkTriMesh *mesh, float x, float y, float z)
 }
 
 
+// END SHAPESHIFTER
 
 
 //using RawCorkMesh = RawMesh<CorkVertex, CorkTriangle>;

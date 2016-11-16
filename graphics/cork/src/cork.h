@@ -42,7 +42,12 @@ struct CorkTriMesh
 
 void freeCorkTriMesh(CorkTriMesh *mesh);
 
+// SHAPESHIFTER
+void reflectCork(CorkTriMesh *mesh, float x, float y, float z);
+void rotateCork(CorkTriMesh *mesh, float x, float y, float z); 
+void scaleCork(CorkTriMesh *mesh, float x, float y, float z); 
 void translateCork(CorkTriMesh *mesh, float x, float y, float z);
+// END SHAPESHIFTER
 
 // the inputs to Boolean operations must be "solid":
 //  -   closed (aka. watertight; see comment at bottom)

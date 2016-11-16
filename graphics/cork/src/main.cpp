@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
     cmds.regCmd("solid",
     "-solid in              Determine whether the input mesh represents\n"
     "                       a solid object.  (aka. watertight) (technically\n"
-    "                         solid == closed and non-self-intersecting)",
+    "                       solid == closed and non-self-intersecting)",
     [](std::vector<string>::iterator &args,
        const std::vector<string>::iterator &end) {
         CorkTriMesh in;
@@ -284,12 +284,15 @@ int main(int argc, char *argv[])
         delete[] in.vertices;
         delete[] in.triangles;
     });
+
+    // SHAPESHIFTER
+
     cmds.regCmd("translate", 
     "-translate in x y z    Translate the input shape by x,y,z and \n"
     "                       and write the result back to the same file", 
     [](std::vector<string>::iterator &args, 
         const std::vector<string>::iterator &end) {
-        CorkTriMesh in, out; 
+        CorkTriMesh in; 
         if(args == end) { cerr << "too few args for translate" << endl; exit(1); }
         string filename = *args; 
         loadMesh(*args, &in); 
@@ -310,10 +313,99 @@ int main(int argc, char *argv[])
 
         saveMesh(filename, in);
         delete[] in.vertices; 
-        delete[] in.triangles; 
-        
-        
+        delete[] in.triangles;         
     });    
+
+    cmds.regCmd("reflect", 
+    "-reflect in a b c      Reflect the input shape across the plane \n"
+    "                       defined by ax + by + cz = 0 \n"
+    "                       and write the result back to the same file", 
+    [](std::vector<string>::iterator &args, 
+        const std::vector<string>::iterator &end) {
+        CorkTriMesh in; 
+        if(args == end) { cerr << "too few args for reflect" << endl; exit(1); }
+        string filename = *args; 
+        loadMesh(*args, &in); 
+        args++; 
+    
+        float x, y, z; 
+        if(args == end) { cerr << "too few args for reflect" << endl; exit(1); }
+        x = strtof((*args).c_str(), NULL);
+        args++;
+        if(args == end) { cerr << "too few args for reflect" << endl; exit(1); }
+        y = strtof((*args).c_str(), NULL);
+        args++; 
+        if(args == end) { cerr << "too few args for reflect" << endl; exit(1); }
+        z = strtof((*args).c_str(), NULL);
+        args++;
+ 
+        reflectCork(&in, x, y, z);  
+
+        saveMesh(filename, in);
+        delete[] in.vertices; 
+        delete[] in.triangles; 
+    });    
+
+    cmds.regCmd("rotate", 
+    "-rotate in x y z       Rotate the input shape around the\n"
+    "                       x, y, and z axes and write the result\n"
+    "                       back to the same file", 
+    [](std::vector<string>::iterator &args, 
+        const std::vector<string>::iterator &end) {
+        CorkTriMesh in; 
+        if(args == end) { cerr << "too few args for rotate" << endl; exit(1); }
+        string filename = *args; 
+        loadMesh(*args, &in); 
+        args++; 
+    
+        float x, y, z; 
+        if(args == end) { cerr << "too few args for rotate" << endl; exit(1); }
+        x = strtof((*args).c_str(), NULL);
+        args++;
+        if(args == end) { cerr << "too few args for rotate" << endl; exit(1); }
+        y = strtof((*args).c_str(), NULL);
+        args++; 
+        if(args == end) { cerr << "too few args for rotate" << endl; exit(1); }
+        z = strtof((*args).c_str(), NULL);
+        args++;
+ 
+        rotateCork(&in, x, y, z);  
+
+        saveMesh(filename, in);
+        delete[] in.vertices; 
+        delete[] in.triangles;         
+    });    
+
+    cmds.regCmd("scale", 
+    "-scale in x y z        Scale the input shape by x,y,z and \n"
+    "                       and write the result back to the same file", 
+    [](std::vector<string>::iterator &args, 
+        const std::vector<string>::iterator &end) {
+        CorkTriMesh in; 
+        if(args == end) { cerr << "too few args for scale" << endl; exit(1); }
+        string filename = *args; 
+        loadMesh(*args, &in); 
+        args++; 
+    
+        float x, y, z; 
+        if(args == end) { cerr << "too few args for scale" << endl; exit(1); }
+        x = strtof((*args).c_str(), NULL);
+        args++;
+        if(args == end) { cerr << "too few args for scale" << endl; exit(1); }
+        y = strtof((*args).c_str(), NULL);
+        args++; 
+        if(args == end) { cerr << "too few args for scale" << endl; exit(1); }
+        z = strtof((*args).c_str(), NULL);
+        args++;
+ 
+        scaleCork(&in, x, y, z);  
+
+        saveMesh(filename, in);
+        delete[] in.vertices; 
+        delete[] in.triangles;         
+    });    
+
+    // END SHAPESHIFTER
 
     cmds.regCmd("union",
     "-union in0 in1 out     Compute the Boolean union of in0 and in1,\n"
