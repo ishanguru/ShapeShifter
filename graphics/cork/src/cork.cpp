@@ -26,7 +26,9 @@
 #include "cork.h"
 
 #include "mesh.h"
+#include <cmath>
 
+#define PI 3.14159265
 
 void freeCorkTriMesh(CorkTriMesh *mesh)
 {
@@ -122,8 +124,33 @@ void reflectCork(CorkTriMesh *mesh, float x, float y, float z)
 
 void rotateCork(CorkTriMesh *mesh, float x, float y, float z)
 {
+    float cosX = (float)cos(x * PI / 180.0);     
+    float sinX = (float)sin(x * PI / 180.0); 
+    float cosY = (float)cos(y * PI / 180.0);     
+    float sinY = (float)sin(y * PI / 180.0); 
+    float cosZ = (float)cos(z * PI / 180.0);     
+    float sinZ = (float)sin(z * PI / 180.0); 
 
-}
+    float rotx[] = {1, 0, 0, 0, cosX, -sinX, 0, sinX, cosX};
+    float roty[] = {cosY, 0, sinY, 0, 1, 0, -sinY, 0, cosY};
+    float rotz[] = {cosZ, -sinZ, 0, sinZ, cosZ, 0, 0, 0, 1};
+    float ppos[3]; 
+    for (uint i = 0; i < mesh->n_vertices; ++i) {
+        ppos[0] = mesh->vertices[i*3]; 
+        ppos[1] = mesh->vertices[i*3+1];
+        ppos[2] = mesh->vertices[i*3+2];
+        matMult3(rotx, ppos, &(mesh->vertices[i*3]));
+        ppos[0] = mesh->vertices[i*3]; 
+        ppos[1] = mesh->vertices[i*3+1];
+        ppos[2] = mesh->vertices[i*3+2];
+        matMult3(roty, ppos, &(mesh->vertices[i*3]));
+        ppos[0] = mesh->vertices[i*3]; 
+        ppos[1] = mesh->vertices[i*3+1];
+        ppos[2] = mesh->vertices[i*3+2];
+        matMult3(rotz, ppos, &(mesh->vertices[i*3]));
+    } 
+}   
+
 
 void scaleCork(CorkTriMesh *mesh, float x, float y, float z)
 {
