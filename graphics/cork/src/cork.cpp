@@ -116,10 +116,30 @@ void matMult3(float *mat, float *vin, float *vout)
     vout[2] = mat[6]*vin[0] + mat[7]*vin[1] + mat[8]*vin[2]; 
 }
 
-void reflectCork(CorkTriMesh *mesh, float x, float y, float z)
+void reflectCork(CorkTriMesh *mesh, float a, float b, float c)
 {
-    
+    float k = 1.0f/(a*a + b*b + c*c); 
+    if (k == 0) 
+        return;
 
+    float refmat[9]; 
+    refmat[0] = k * (-a*a + b*b + c*c); 
+    refmat[1] = k * (-2.0f*a*b); 
+    refmat[2] = k * (-2.0f*a*c);
+    refmat[3] = refmat[1]; 
+    refmat[4] = k * (a*a - b*b + c*c); 
+    refmat[5] = k * (-2.0f*b*c); 
+    refmat[6] = refmat[2]; 
+    refmat[7] = refmat[5];
+    refmat[8] = k * (a*a + b*b - c*c); 
+
+    float ppos[3]; 
+    for (uint i = 0; i < mesh->n_vertices; ++i) {
+        ppos[0] = mesh->vertices[i*3]; 
+        ppos[1] = mesh->vertices[i*3+1];
+        ppos[2] = mesh->vertices[i*3+2];
+        matMult3(refmat, ppos, &(mesh->vertices[i*3])); 
+    } 
 }
 
 void rotateCork(CorkTriMesh *mesh, float x, float y, float z)
