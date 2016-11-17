@@ -226,14 +226,14 @@ void ssUnion(char *shapeIn1, char *shapeIn2, char *shapeOut)
         exit(1); 
     }    
     else if (pid == 0) { // child
-        execlp(corkexe, corkexe, "-diff", shapeIn1, 
+        execlp(corkexe, corkexe, "-union", shapeIn1, 
                 shapeIn2, shapeOut, (char *)NULL); 
         exit(127); 
     }
     else { // parent
         // Wait for child to finish since probably need this file
         if ((pid = waitpid(pid, &status, 0)) < 0) {
-            fprintf(stdout, "Something went horribly wrong; difference\n"); 
+            fprintf(stdout, "Something went horribly wrong; union\n"); 
             exit(1);
         }
     }
