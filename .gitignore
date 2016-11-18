@@ -4,4 +4,4 @@ _build/
 graphics/cork/bin
 graphics/display/sshiftdisplay
 *.o
-
+graphics/sstools

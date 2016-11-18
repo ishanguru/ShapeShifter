@@ -37,8 +37,8 @@ double winL = -10; // value at left of window
 double winR = 10; // right
 double winB = -10;  // bottom
 double winT = 10; // top
-double winN = -1; // near
-double winF = 1; 
+double winN = -10; // near
+double winF = 10; 
 
 CorkTriMesh shape; 
 GLuint vbo; // vertex buffer object, stores triangle vertex info
