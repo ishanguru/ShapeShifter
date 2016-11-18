@@ -40,6 +40,7 @@ double winT = 10; // top
 double winN = -10; // near
 double winF = 10; 
 
+
 CorkTriMesh shape; 
 GLuint vbo; // vertex buffer object, stores triangle vertex info
 GLuint ibo; // index buffer object, stores indices of triangles
@@ -94,7 +95,7 @@ void uploadMeshData()
 
 void display()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
     //glLoadIdentity(); 
 
@@ -111,7 +112,14 @@ void display()
     glVertex3f(0.0, 0.0, 100.0); 
     glEnd(); 
 
+
+    CHECK_GL(glEnable(GL_LIGHTING));
+    CHECK_GL(glEnable(GL_LIGHT0));
+    CHECK_GL(glEnable(GL_DEPTH_TEST));
+ 
     glColor3f(.2, .2, .2);
+
+
 
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, vbo)); 
     CHECK_GL(glEnableClientState(GL_VERTEX_ARRAY));
@@ -128,20 +136,10 @@ void display()
     CHECK_GL(glDisableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0)); 
 
-
-/*
-    glBegin(GL_TRIANGLES); 
-    glColor3f(1.0, 0.0, 0.0); 
-    glVertex3f(-1.0f, -1.0f, 0.0f);
-    glColor3f(0.0, 1.0, 0.0);  
-    glVertex3f(1.0f, -1.0f, 0.0f);
-    glColor3f(0.0, 0.0, 1.0);      
-    glVertex3f(0.0f, 1.0f, 0.0f); 
-    glEnd(); 
-  */
-  
-
-
+    CHECK_GL(glDisable(GL_LIGHTING));
+    CHECK_GL(glDisable(GL_LIGHT0));
+    CHECK_GL(glDisable(GL_DEPTH_TEST));
+ 
     glutSwapBuffers(); 
 
 }
@@ -149,7 +147,7 @@ void display()
 void initOpenGLandGLUT(int argc, char **argv)
 {
     glutInit(&argc, argv); 
-    glutInitDisplayMode(GLUT_DOUBLE|GLUT_RGBA);
+    glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
     glutInitWindowSize(windowWidth, windowHeight);
     
     // Position the window in the center of the screen
@@ -167,11 +165,22 @@ void initOpenGLandGLUT(int argc, char **argv)
     glutMouseFunc(mouse); 
     glutIdleFunc(idle); 
 
-    glDisable(GL_LIGHTING); 
-    glDisable(GL_DEPTH_TEST); 
-    // Set background color to gray
+   // Set background color to gray
     CHECK_GL(glClearColor(.7, .7, .7, 1.0));     
 
+    // Set up lighting and material properties
+    GLfloat lightPos0[] = {0.0, 0.0, 0.0, 1.0}; 
+    GLfloat lightAmb0[] = {0.2, 0.2, 0.2, 1.0}; 
+    GLfloat lightDiff0[] = {1.0, 0.0, 0.0, 1.0}; 
+    GLfloat lightSpec0[] = {1.0, 0.0, 0.0, 1.0}; 
+ 
+    CHECK_GL(glLightfv(GL_LIGHT0, GL_POSITION, lightPos0));   
+    CHECK_GL(glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb0)); 
+    CHECK_GL(glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiff0)); 
+    CHECK_GL(glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpec0));    
+
+    CHECK_GL(glShadeModel (GL_SMOOTH));
+    
     reshape(windowWidth, windowHeight); 
 
 }
