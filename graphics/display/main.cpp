@@ -51,9 +51,12 @@ void reshape(int w, int h)
     windowWidth = std::max(w, 1); 
     windowHeight = std::max(h, 1);
     CHECK_GL(glViewport(0, 0, windowHeight, windowHeight)); 
-    CHECK_GL(glMatrixMode(GL_PROJECTION));
     CHECK_GL(glLoadIdentity()); 
-    CHECK_GL(glOrtho(winL, winR, winB, winT, winN, winF));
+    //CHECK_GL(glOrtho(winL, winR, winB, winT, winN, winF));
+    CHECK_GL(glFrustum(-1, 1, -1, 1, 1, 100));
+    
+    CHECK_GL(gluLookAt(0, 0, 10, 0, 0, 0, 0, 1, 0));
+
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -169,9 +172,9 @@ void initOpenGLandGLUT(int argc, char **argv)
     CHECK_GL(glClearColor(.7, .7, .7, 1.0));     
 
     // Set up lighting and material properties
-    GLfloat lightPos0[] = {0.0, 0.0, 0.0, 1.0}; 
+    GLfloat lightPos0[] = {0.0, 0.0, 3.0, 1.0}; 
     GLfloat lightAmb0[] = {0.2, 0.2, 0.2, 1.0}; 
-    GLfloat lightDiff0[] = {1.0, 0.0, 0.0, 1.0}; 
+    GLfloat lightDiff0[] = {1.0, 0.0, 0.0, .2}; 
     GLfloat lightSpec0[] = {1.0, 0.0, 0.0, 1.0}; 
  
     CHECK_GL(glLightfv(GL_LIGHT0, GL_POSITION, lightPos0));   
