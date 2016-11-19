@@ -15,7 +15,7 @@ let _ =
   (*Semant.check ast;*)
   match action with
     | Ast -> print_string (Ast.string_of_program ast)
-    | PrettyPrint -> print_string (Pp.string_of_program ast)
+    | PrettyPrint -> print_string (Prettyprint.string_of_program ast)
     | LLVM_IR -> print_string (Llvm.string_of_llmodule (Codegen.translate ast))
     | Compile -> let m = Codegen.translate ast in
         Llvm_analysis.assert_valid_module m;

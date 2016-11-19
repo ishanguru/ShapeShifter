@@ -1,0 +1,35 @@
+Things to do: 
+
+LLVM side: 
+	
+	- Convert cpp interface into LLVM IR (do this using clang)
+	- Figure out mapping from scene() to main()
+	- Figure out what the cpp interface maps to in the LLVM IR file (for starters just hardcode the strings)
+	- Map the shape objects to the .off files they correspond to
+	- For Shape initialization copy the primitive to the new file that's associated with the new shape name
+	- Figure out how to do file cleanup (when the program ends delete the temporary files that were created)
+	- Include a random function (random floats between zero and one)
+	- Add in support for exceptions (and try/catch) / error handling
+	- Support bitwise shifts
+	- Include Sine/Cosine
+	- Figure out how to get the dot operator working
+
+Graphics side: 
+
+    - Fix the display (some of the shapes show up weirdly; like ballA.off)
+    - Find .OFF files for the basic shapes
+    - Test all the transformations / operations thoroughly
+    - Expand the CorkTriMesh class to have some important info like
+        - position (overall shape position; this is pretty important)
+        - orientation
+
+Testing side: 
+
+	- Get testing suite working
+	- Test case for the AST (does it map correctly to what we expect)
+	- Test case for Hello World 
+	- Try break the program as much as possible (a lot of negative testing - write test cases)
+	- Figure out what are runtime errors vs. compiler errors
+	- Test expected shape generation
+	- Have atleast 2/3 working tests for the hello world demo
+	
