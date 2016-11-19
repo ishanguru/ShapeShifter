@@ -40,6 +40,9 @@ double winT = 10; // top
 double winN = -10; // near
 double winF = 10; 
 
+double camX = 0.0; 
+double camY = 0.0; 
+double camZ = 4.0; 
 
 CorkTriMesh shape; 
 GLuint vbo; // vertex buffer object, stores triangle vertex info
@@ -50,28 +53,59 @@ void reshape(int w, int h)
 {
     windowWidth = std::max(w, 1); 
     windowHeight = std::max(h, 1);
-    CHECK_GL(glViewport(0, 0, windowHeight, windowHeight)); 
+    CHECK_GL(glViewport(0, 0, windowWidth, windowHeight)); 
+    CHECK_GL(glMatrixMode(GL_PROJECTION));
     CHECK_GL(glLoadIdentity()); 
+    CHECK_GL(gluPerspective(60, (GLfloat)windowWidth/windowHeight, 1, 200));
     //CHECK_GL(glOrtho(winL, winR, winB, winT, winN, winF));
-    CHECK_GL(glFrustum(-1, 1, -1, 1, 1, 100));
-    
-    CHECK_GL(gluLookAt(0, 0, 10, 0, 0, 0, 0, 1, 0));
-
+    //CHECK_GL(glFrustum(-1, 1, -1, 1, 1, 100));
+    CHECK_GL(glMatrixMode(GL_MODELVIEW));   
+    glutPostRedisplay();
 }
 
 void keyboard(unsigned char key, int x, int y)
 {
-    if (key == 27 || key == 'q' || key == 'Q') {
+    switch (key) {
+    case  27: 
+    case 'q': 
+    case 'Q': 
         exit(0); 
+        break; 
+    default: 
+        break; 
     }
+   
     // add other key functions - zoom? translate? animate?
     // toggle axis display
 }
+
+void special(int key, int x, int y) 
+{
+    double dcam = .1; 
+    switch (key) {
+    case GLUT_KEY_UP: 
+        camY += dcam; 
+        break; 
+    case GLUT_KEY_DOWN: 
+        camY -= dcam; 
+        break; 
+    case GLUT_KEY_LEFT: 
+        camX -= dcam; 
+        break; 
+    case GLUT_KEY_RIGHT: 
+        camX += dcam; 
+        break;
+    } 
+    glutPostRedisplay(); 
+}
+
+    
 
 // Upon mouse interaction
 void mouse(int button, int state, int x, int y)
 {
     // zoom, translate camera, ... 
+   
 
 }
 
@@ -99,8 +133,8 @@ void uploadMeshData()
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glMatrixMode(GL_PROJECTION);
-    //glLoadIdentity(); 
+    glLoadIdentity();
+    CHECK_GL(gluLookAt(camX, camY, camZ, 0, 0, 0, 0, 1, 0));
 
     // Draw axes
     glBegin(GL_LINES);  
@@ -167,12 +201,13 @@ void initOpenGLandGLUT(int argc, char **argv)
     //glutMotionFunc(motion);
     glutMouseFunc(mouse); 
     glutIdleFunc(idle); 
+    glutSpecialFunc(special);
 
    // Set background color to gray
     CHECK_GL(glClearColor(.7, .7, .7, 1.0));     
 
     // Set up lighting and material properties
-    GLfloat lightPos0[] = {0.0, 0.0, 3.0, 1.0}; 
+    GLfloat lightPos0[] = {0.0, -10.0, 3.0, 0.0}; 
     GLfloat lightAmb0[] = {0.2, 0.2, 0.2, 1.0}; 
     GLfloat lightDiff0[] = {1.0, 0.0, 0.0, .2}; 
     GLfloat lightSpec0[] = {1.0, 0.0, 0.0, 1.0}; 
@@ -182,6 +217,7 @@ void initOpenGLandGLUT(int argc, char **argv)
     CHECK_GL(glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiff0)); 
     CHECK_GL(glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpec0));    
 
+    CHECK_GL(glEnable(GL_COLOR_MATERIAL));
     CHECK_GL(glShadeModel (GL_SMOOTH));
     
     reshape(windowWidth, windowHeight); 
@@ -228,12 +264,9 @@ int main(int argc, char **argv)
  
     initOpenGLandGLUT(argc, argv); 
 
-    loadMesh(argv[1], &shape);    
-    
-    uploadMeshData(); 
-  
-        
- 
-    glutMainLoop(); 
+    loadMesh(argv[1], &shape);     
    
+    uploadMeshData(); 
+        
+    glutMainLoop(); 
 }
