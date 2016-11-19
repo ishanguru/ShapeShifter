@@ -1,0 +1,65 @@
+
+
+Shape makePyramid(int levels, double baseSize, double stepHeight, double topSize) {
+
+	Shape base = CUBE; // Create a unit cube centered at origin
+	Scale (base, baseSize, stepHeight, baseSize);
+
+	// move base to rest on the XZ plane
+	
+	Translate(base, 0.0, stepHeight / 2.0, 0.0);
+
+	double sizeDiff = (baseSize - topSize) / levels; 
+	Shape prey = base; // Copy by reference
+	
+	double currSize = baseSize;
+
+	int i = 0; // Variables must be pre-declared
+	for (i = 0; i < levels; i = i + 1) {
+
+		Shape next = Copy(prey); // Create an exact copy of prey
+		Scale(next, (currSize - sizeDiff) / currSize, 1, (currSize - sizeDiff) / currSize);
+		currSize = currSize - sizeDiff;
+
+		if (currSize <= 0.0) {
+			break; // Break out of closest loop
+		}
+
+		else {} // Do nothing
+		
+		Translate(next, 0.0, stepHeight, 0.0);
+
+		// Build the pyramid by union-ing the levels together
+
+		base = Union(base, next);
+		prey = next; // Assignment by reference
+	}
+
+	return base;
+
+}
+
+void scene {
+
+	Shape pyr5 = makePyramid(5, 5.0, 1.0, 1.0);
+	Shape pyr3 = makePyramid(3, 4.0, 1.0, 2.0);
+	Shape pyr5i = makePyramid(5, 1.0, 1.0, 5.0);
+
+	Translate(pyr5i, 0.0, 5.0, 0.0);
+
+	// Stack the inverted pyramid on its normal counterpart
+
+	Shape pyr5Stack = Union(pyr5, pyr5i);
+	
+	Shape pyr3i = Reflect(pyr3, 0.0, 1.0, 0.0) // Reflect across y=0
+
+	Translate(pyr3i, 0.0, 3.0, 0.0);
+	
+	Shape pyr3Strack = Union(pyr3, pyr3i); 
+	Rotate(pyr3Stack, 0.0, 0.0, 90.0); // Rotate around Z
+
+	Shape merged = Union(pyr3Stack, pyr5Stack);
+	
+	Render(merged); // Display the result
+
+	Save(merged, "pyramids.off"); // save mesh representation to file 
