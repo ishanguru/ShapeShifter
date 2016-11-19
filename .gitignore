@@ -5,3 +5,5 @@ graphics/cork/bin
 graphics/display/sshiftdisplay
 *.o
 graphics/sstools
+*.ll
+*.out
