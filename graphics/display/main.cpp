@@ -67,11 +67,30 @@ void reshape(int w, int h)
 
 void keyboard(unsigned char key, int x, int y)
 {
+    double dcam = .05; 
+    double theta = camTheta*PI/180.0; 
+    double phi = camPhi*PI/180.0;
+    
     switch (key) {
     case  27: 
     case 'q': 
     case 'Q': 
         exit(0); 
+        break; 
+    case '+': 
+        camR = std::max(.01, camR-dcam);
+        camX = camR * sin(theta) * sin(phi);
+        camY = camR * cos(theta);
+        camZ = camR * sin(theta) * cos(phi); 
+        glutPostRedisplay();
+        //fprintf(stdout, "cam: (%f, %f, %f): %f\n", camX, camY, camZ, std::sqrt(camX*camX + camY*camY + camZ*camZ));
+        break; 
+    case '-': 
+        camR += dcam; 
+        camX = camR * sin(theta) * sin(phi);
+        camY = camR * cos(theta);
+        camZ = camR * sin(theta) * cos(phi); 
+        glutPostRedisplay();
         break; 
     default: 
         break; 
@@ -86,16 +105,16 @@ void special(int key, int x, int y)
     double dcam = 1; 
     switch (key) {
     case GLUT_KEY_UP: 
-        camPhi -= dcam; 
-        break; 
-    case GLUT_KEY_DOWN: 
-        camPhi += dcam; 
-        break; 
-    case GLUT_KEY_LEFT: 
         camTheta -= dcam; 
         break; 
-    case GLUT_KEY_RIGHT: 
+    case GLUT_KEY_DOWN: 
         camTheta += dcam; 
+        break; 
+    case GLUT_KEY_LEFT: 
+        camPhi -= dcam; 
+        break; 
+    case GLUT_KEY_RIGHT: 
+        camPhi += dcam; 
         break;
     } 
 
@@ -241,8 +260,8 @@ void initOpenGLandGLUT(int argc, char **argv)
 
  
     reshape(windowWidth, windowHeight); 
-
 }
+
 
 void loadMesh(std::string fileName, CorkTriMesh *out)
 {
