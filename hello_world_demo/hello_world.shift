@@ -1,0 +1,4 @@
+void scene() {
+    print("Hello world!");
+}
+
