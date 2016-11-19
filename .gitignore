@@ -1,9 +1,10 @@
 _build/
 *.swp
-*.off
+graphics/cork/samples
 graphics/cork/bin
 graphics/display/sshiftdisplay
 *.o
 graphics/sstools
 *.ll
 *.out
+shapeshifter.native
