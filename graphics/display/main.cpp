@@ -11,6 +11,7 @@
 #include "files.h"
 #include "cork.h"
 
+#define PI 3.14159265
 
 void check_GL_Error(const char *file, int line) 
 {
@@ -40,9 +41,10 @@ double winT = 10; // top
 double winN = -10; // near
 double winF = 10; 
 
-double camX = 0.0; 
-double camY = 0.0; 
-double camZ = 4.0; 
+double camTheta = 0.0; 
+double camPhi = 90.0; 
+double camR = 4.0; 
+double camX, camY, camZ; 
 
 CorkTriMesh shape; 
 GLuint vbo; // vertex buffer object, stores triangle vertex info
@@ -81,22 +83,30 @@ void keyboard(unsigned char key, int x, int y)
 
 void special(int key, int x, int y) 
 {
-    double dcam = .1; 
+    double dcam = 1; 
     switch (key) {
     case GLUT_KEY_UP: 
-        camY += dcam; 
+        camPhi -= dcam; 
         break; 
     case GLUT_KEY_DOWN: 
-        camY -= dcam; 
+        camPhi += dcam; 
         break; 
     case GLUT_KEY_LEFT: 
-        camX -= dcam; 
+        camTheta -= dcam; 
         break; 
     case GLUT_KEY_RIGHT: 
-        camX += dcam; 
+        camTheta += dcam; 
         break;
     } 
+
+    double theta = camTheta*PI/180.0; 
+    double phi = camPhi*PI/180.0;
+    camX = camR * sin(theta) * sin(phi);
+    camY = camR * cos(theta);
+    camZ = camR * sin(theta) * cos(phi); 
+  
     glutPostRedisplay(); 
+
 }
 
     
@@ -219,7 +229,17 @@ void initOpenGLandGLUT(int argc, char **argv)
 
     CHECK_GL(glEnable(GL_COLOR_MATERIAL));
     CHECK_GL(glShadeModel (GL_SMOOTH));
-    
+   
+    // Set camera coordinates
+    double theta = camTheta*PI/180.0; 
+    double phi = camPhi*PI/180.0;
+    camX = camR * sin(theta) * sin(phi);
+    camY = camR * cos(theta);
+    camZ = camR * cos(theta) * sin(phi); 
+  
+
+
+ 
     reshape(windowWidth, windowHeight); 
 
 }
