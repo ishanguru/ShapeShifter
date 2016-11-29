@@ -39,7 +39,7 @@ let translate (globals, functions) =
   and i32_t  = L.i32_type  context
   and i8_t   = L.i8_type   context
   and i1_t   = L.i1_type   context
-  and void_t = L.void_type context 
+  and void_t = L.void_type context
   and double_t = L.double_type context in
 
   let ltype_of_typ = function
@@ -63,7 +63,8 @@ let translate (globals, functions) =
   (* Define each function (arguments and return type) so we can call it *)
   let function_decls =
     let function_decl m fdecl =
-      let name = fdecl.A.fname
+      let name = 
+      	if fdecl.A.fname = "scene" then "main" else fdecl.A.fname
       and formal_types =
 	Array.of_list (List.map (fun (t,_) -> ltype_of_typ t) fdecl.A.formals)
       in let ftype = L.function_type (ltype_of_typ fdecl.A.typ) formal_types in
@@ -72,7 +73,9 @@ let translate (globals, functions) =
   
   (* Fill in the body of the given function *)
   let build_function_body fdecl =
-    let (the_function, _) = StringMap.find fdecl.A.fname function_decls in
+    let name = 
+      	if fdecl.A.fname = "scene" then "main" else fdecl.A.fname in
+    let (the_function, _) = StringMap.find name function_decls in
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
