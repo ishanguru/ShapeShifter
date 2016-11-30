@@ -79,12 +79,13 @@ let translate (globals, functions) =
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
-    let flt_format_str = L.build_global_stringptr "%f\n" "fmt" builder in
+    let dbl_format_str = L.build_global_stringptr "%f\n" "fmt" builder in
     
     (* Construct the function's "locals": formal arguments and locally
        declared variables.  Allocate each on the stack, initialize their
        value, if appropriate, and remember their values in the "locals" map *)
     let local_vars =
+
       let add_formal m (t, n) p = L.set_value_name n p;
 	let local = L.build_alloca (ltype_of_typ t) n builder in
 	ignore (L.build_store p local builder);
@@ -155,6 +156,21 @@ let translate (globals, functions) =
 		  		| A.Geq     -> L.build_fcmp L.Fcmp.Oge
 		  ) e1' e2' "tmp" builder
 
+		| A.Id id ->   
+		  (match op with
+		    	A.Add     -> L.build_fadd
+		  		| A.Sub     -> L.build_fsub
+		  		| A.Mult    -> L.build_fmul
+	          	| A.Div     -> L.build_fdiv
+		  		| A.And     -> L.build_and
+		  		| A.Or      -> L.build_or
+		  		| A.Equal   -> L.build_fcmp L.Fcmp.Oeq
+		  		| A.Neq     -> L.build_fcmp L.Fcmp.One
+		  		| A.Less    -> L.build_fcmp L.Fcmp.Ult
+		  		| A.Leq     -> L.build_fcmp L.Fcmp.Ole
+		  		| A.Greater -> L.build_fcmp L.Fcmp.Ogt
+		  		| A.Geq     -> L.build_fcmp L.Fcmp.Oge
+		  ) e1' e2' "tmp" builder
 	  )
       
       | A.Unop(op, e) ->
@@ -166,25 +182,26 @@ let translate (globals, functions) =
       | A.Assign (s, e) -> let e' = expr builder e in
 	                   ignore (L.build_store e' (lookup s) builder); e'
 
-      | A.Call ("print", [e]) | A.Call ("printb", [e]) ->
+      | A.Call ("print", [e]) ->
 
       	(match List.hd[e] with 
+
       		| A.StrLit s -> 
       			let string_head = expr builder (List.hd[e]) in 
       			let zero_const = L.const_int i32_t 0 in
-      			let str = L.build_in_bounds_gep string_head [| zero_const |] "printf" builder in
-      				L.build_call printf_func [| str |] "printf" builder
+      			let str = L.build_in_bounds_gep string_head [| zero_const |] "str_printf" builder in
+      				L.build_call printf_func [| str |] "str_printf" builder
 
-      		| A.DblLit d -> L.build_call printf_func [| flt_format_str ; (expr builder e) |]
-	    		"printf" builder
-      		| A.IntLit i -> L.build_call printf_func [| int_format_str ; (expr builder e) |]
-	    		"printf" builder
+      		| A.DblLit d -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
+      		| A.IntLit i -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
+      		| A.Id id -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
+
 	    )
 
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
-	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
-	 let result = (match fdecl.A.typ with A.Void -> ""
+	 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
+	 	 let result = (match fdecl.A.typ with A.Void -> ""
                                             | _ -> f ^ "_result") in
          L.build_call fdef (Array.of_list actuals) result builder
     in

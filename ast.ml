@@ -72,8 +72,8 @@ let string_of_uop = function
   | Not -> "!"
 
 let rec string_of_expr = function
-  | IntLit(l) -> string_of_int l
-  | DblLit(l) -> string_of_float l
+  | IntLit(i) -> string_of_int i
+  | DblLit(d) -> string_of_float d
   | StrLit(l) -> l
   | BoolLit(true) -> "true"
   | BoolLit(false) -> "false"
