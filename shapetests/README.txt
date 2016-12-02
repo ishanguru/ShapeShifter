@@ -5,3 +5,13 @@ In each of those groups, various aspects of the ShapeShifter language tested sys
 
 TO IMPLEMENT:
 + fail_arith_mixedtypes.shift
++ fail_eq_mixedtypes.shift
++ tests comparing shapes < > == 
++ tests comparing ints
++ tests comparing bools
++ test UNIONing ints (fail)
++ test DIFFERENCEing ints (fail)
++ test INTERSECTing ints (fail)
++ test UNIONing bools (fail)
++ test DIFFERENCEing bools (fail)
++ test INTERSECTing bools (fail)
