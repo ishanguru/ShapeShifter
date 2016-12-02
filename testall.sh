@@ -11,6 +11,9 @@ LLI="lli"
 
 # Path to the shapeshifter compiler.  Usually "./shapeshifter.native"
 # Try "_build/shapeshifter.native" if ocamlbuild was unable to create a symbolic link.
+
+make
+
 SHAPESHIFTER="./shapeshifter.native"
 #SHAPESHIFTER="_build/shapeshifter.native"
 
