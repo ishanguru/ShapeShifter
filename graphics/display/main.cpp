@@ -31,6 +31,12 @@ void check_GL_Error(const char *file, int line)
 #define CHECK_GL(func) func;
 #endif
 
+static void die(const char *message) 
+{
+    fprintf(stderr, "%s\n", message);
+    exit(EXIT_FAILURE);
+}
+
 int windowWidth = 600; 
 int windowHeight = 600; 
 
@@ -145,6 +151,15 @@ void idle()
 
 }
 
+void calcNormals(float *pos, float *norms, int n)
+{
+    for(int i = 0; i < n; ++i) {
+        norms[i*3] = 0; 
+        norms[i*3+1] = 1; 
+        norms[i*3+2] = 0;
+    }
+}
+
 void uploadMeshData()
 {
     CHECK_GL(glGenBuffers(1, &vbo)); 
@@ -152,7 +167,21 @@ void uploadMeshData()
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, vbo)); 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));    
  
-    CHECK_GL(glBufferData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.vertices, GL_STATIC_DRAW));
+    //CHECK_GL(glBufferData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.vertices, GL_STATIC_DRAW));
+
+    // Allocate enough buffer space for positions + normals
+    CHECK_GL(glBufferData(GL_ARRAY_BUFFER, shape.n_vertices*6*sizeof(float), 0, GL_STATIC_DRAW));
+    // Upload position data
+    CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, shape.n_vertices*3*sizeof(float), shape.vertices));
+    // Calc and upload normal data 
+    float *norms = (float *)malloc(shape.n_vertices*3*sizeof(float));
+    if (!norms) {
+        die("malloc failed");
+    }
+    calcNormals(shape.vertices, norms, shape.n_vertices);
+    CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.n_vertices*3*sizeof(float), norms));
+    free(norms);
+
     CHECK_GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.n_triangles*3*sizeof(uint), shape.triangles, GL_STATIC_DRAW)); 
  
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0)); 
@@ -162,6 +191,8 @@ void uploadMeshData()
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     CHECK_GL(gluLookAt(camX, camY, camZ, 0, 0, 0, 0, 1, 0));
 
@@ -190,6 +221,8 @@ void display()
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, vbo)); 
     CHECK_GL(glEnableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glVertexPointer(3, GL_FLOAT, 0, 0)); 
+    CHECK_GL(glEnableClientState(GL_NORMAL_ARRAY));
+    CHECK_GL(glNormalPointer(GL_FLOAT, 0, (char *)(shape.n_triangles*3)));
 
     //CHECK_GL(glDrawArrays(GL_TRIANGLES, 0, 3*shape.n_triangles)); 
 
@@ -200,6 +233,7 @@ void display()
 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     CHECK_GL(glDisableClientState(GL_VERTEX_ARRAY));
+    CHECK_GL(glDisableClientState(GL_NORMAL_ARRAY));
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0)); 
 
     CHECK_GL(glDisable(GL_LIGHTING));

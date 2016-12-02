@@ -9,7 +9,9 @@ For display, OpenGL is used in conjunction with the utility toolkit glut.
 TODO: 
     + Fix the display (some of the shapes show up weirdly; like ballA.off)
     - Fix lighting
-    - Add camera movement 
+        - Add normals
+    - Add camera movement
+        - Fix flip  
     - Find .OFF files for the basic shapes
     - Test all the transformations / operations thoroughly
     - Expand the CorkTriMesh class to have some important info like
