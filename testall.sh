@@ -32,6 +32,10 @@ Usage() {
 }
 
 SignalError() {
+# Function for printing our error message when error =/= 0. 
+# RK: I think there's an error here, because it says every thing has failed...
+# RK: even our test_hello_world.shift, which we know works
+
     if [ $error -eq 0 ] ; then
 	echo "FAILED"
 	error=1
@@ -75,6 +79,9 @@ Check() {
     error=0
     basename=`echo $1 | sed 's/.*\\///
                              s/.mc//'`
+# This is where the ref file is made (what we compare .out to...)
+# Don't know if it's working... / what is happening with sed... 
+    
     reffile=`echo $1 | sed 's/.mc$//'`
     basedir="`echo $1 | sed 's/\/[^\/]*$//'`/."
 
