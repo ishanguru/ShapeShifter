@@ -151,12 +151,32 @@ void idle()
 
 }
 
-void calcNormals(float *pos, float *norms, int n)
+void calcNormals(float *pos, unsigned int *ind, float *norms, int n)
 {
+    // triangle vertex positions
+    float u0, u1, u2, v0, v1, v2, w0, w1, w2; 
+    float a0, a1, a2, b0, b1, b2; // edge vectors uv, uw
     for(int i = 0; i < n; ++i) {
-        norms[i*3] = 0; 
-        norms[i*3+1] = 1; 
-        norms[i*3+2] = 0;
+        u0 = pos[ind[i*3]*3];
+        u1 = pos[ind[i*3]*3+1];
+        u2 = pos[ind[i*3]*3+2];
+        v0 = pos[ind[i*3+1]*3];
+        v1 = pos[ind[i*3+1]*3+1];
+        v2 = pos[ind[i*3+1]*3+2];
+        w0 = pos[ind[i*3+2]*3];
+        w1 = pos[ind[i*3+2]*3+1];
+        w2 = pos[ind[i*3+2]*3+2];
+        
+        a0 = v0 - u0;
+        a1 = v1 - u1;
+        a2 = v2 - u2;
+        b0 = w0 - u0;
+        b1 = w1 - u1;
+        b2 = w2 - u2;
+
+        norms[i*3] = a1 * b2 - a2 * b1;
+        norms[i*3+1] = a2 * b0 - a0 * b2;
+        norms[i*3+2] = a0 * b1 - a1 * b0;
     }
 }
 
@@ -178,7 +198,7 @@ void uploadMeshData()
     if (!norms) {
         die("malloc failed");
     }
-    calcNormals(shape.vertices, norms, shape.n_vertices);
+    calcNormals(shape.vertices, shape.triangles, norms, shape.n_triangles);
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.n_vertices*3*sizeof(float), norms));
     free(norms);
 
