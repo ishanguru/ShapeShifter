@@ -1,0 +1,14 @@
+int scene() {
+    int a;
+    int b;
+    int c;
+    a = 3;
+    print(a);
+    b = 4;
+    c = a*b;
+    a = 3*5;
+    print(b);
+    print(c);
+    print(a);
+}
+    

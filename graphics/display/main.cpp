@@ -31,12 +31,6 @@ void check_GL_Error(const char *file, int line)
 #define CHECK_GL(func) func;
 #endif
 
-static void die(const char *message) 
-{
-    fprintf(stderr, "%s\n", message);
-    exit(EXIT_FAILURE);
-}
-
 int windowWidth = 600; 
 int windowHeight = 600; 
 
@@ -64,7 +58,9 @@ void reshape(int w, int h)
     CHECK_GL(glViewport(0, 0, windowWidth, windowHeight)); 
     CHECK_GL(glMatrixMode(GL_PROJECTION));
     CHECK_GL(glLoadIdentity()); 
-    CHECK_GL(gluPerspective(80, (GLfloat)windowWidth/windowHeight, 1, 1000));
+    CHECK_GL(gluPerspective(60, (GLfloat)windowWidth/windowHeight, 1, 200));
+    //CHECK_GL(glOrtho(winL, winR, winB, winT, winN, winF));
+    //CHECK_GL(glFrustum(-1, 1, -1, 1, 1, 100));
     CHECK_GL(glMatrixMode(GL_MODELVIEW));   
     glutPostRedisplay();
 }
@@ -149,44 +145,6 @@ void idle()
 
 }
 
-void calcNormals(float *pos, unsigned int *ind, float *norms, int n)
-{
-    // triangle vertex positions
-    float u0, u1, u2, v0, v1, v2, w0, w1, w2; 
-    float a0, a1, a2, b0, b1, b2; // edge vectors uv, uw
-    float n0, n1, n2; 
-    for(int i = 0; i < n; ++i) {
-        u0 = pos[ind[i*3]*3];
-        u1 = pos[ind[i*3]*3+1];
-        u2 = pos[ind[i*3]*3+2];
-        v0 = pos[ind[i*3+1]*3];
-        v1 = pos[ind[i*3+1]*3+1];
-        v2 = pos[ind[i*3+1]*3+2];
-        w0 = pos[ind[i*3+2]*3];
-        w1 = pos[ind[i*3+2]*3+1];
-        w2 = pos[ind[i*3+2]*3+2];
-        
-        a0 = v0 - u0;
-        a1 = v1 - u1;
-        a2 = v2 - u2;
-        b0 = w0 - u0;
-        b1 = w1 - u1;
-        b2 = w2 - u2;
-
-        n0 = a1 * b2 - a2 * b1;
-        n1 = a2 * b0 - a0 * b2;
-        n2 = a0 * b1 - a1 * b0;
-        
-        float d = std::sqrt(n0*n0 + n1*n1 + n2*n2);
-        n0 = n0/d;
-        n1 = n1/d;
-        n2 = n2/d;
-        norms[i*3] = n0;
-        norms[i*3+1] = n1;
-        norms[i*3+2] = n2;
-    }
-}
-
 void uploadMeshData()
 {
     CHECK_GL(glGenBuffers(1, &vbo)); 
@@ -194,21 +152,7 @@ void uploadMeshData()
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, vbo)); 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));    
  
-    //CHECK_GL(glBufferData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.vertices, GL_STATIC_DRAW));
-
-    // Allocate enough buffer space for positions + normals
-    CHECK_GL(glBufferData(GL_ARRAY_BUFFER, shape.n_vertices*6*sizeof(float), 0, GL_STATIC_DRAW));
-    // Upload position data
-    CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, shape.n_vertices*3*sizeof(float), shape.vertices));
-    // Calc and upload normal data 
-    float *norms = (float *)malloc(shape.n_vertices*3*sizeof(float));
-    if (!norms) {
-        die("malloc failed");
-    }
-    calcNormals(shape.vertices, shape.triangles, norms, shape.n_triangles);
-    CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.n_vertices*3*sizeof(float), norms));
-    free(norms);
-
+    CHECK_GL(glBufferData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.vertices, GL_STATIC_DRAW));
     CHECK_GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.n_triangles*3*sizeof(uint), shape.triangles, GL_STATIC_DRAW)); 
  
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0)); 
@@ -218,7 +162,6 @@ void uploadMeshData()
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     CHECK_GL(gluLookAt(camX, camY, camZ, 0, 0, 0, 0, 1, 0));
 
@@ -247,8 +190,6 @@ void display()
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, vbo)); 
     CHECK_GL(glEnableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glVertexPointer(3, GL_FLOAT, 0, 0)); 
-    CHECK_GL(glEnableClientState(GL_NORMAL_ARRAY));
-    CHECK_GL(glNormalPointer(GL_FLOAT, 0, (char *)(shape.n_triangles*3)));
 
     //CHECK_GL(glDrawArrays(GL_TRIANGLES, 0, 3*shape.n_triangles)); 
 
@@ -259,7 +200,6 @@ void display()
 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     CHECK_GL(glDisableClientState(GL_VERTEX_ARRAY));
-    CHECK_GL(glDisableClientState(GL_NORMAL_ARRAY));
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0)); 
 
     CHECK_GL(glDisable(GL_LIGHTING));
@@ -296,10 +236,10 @@ void initOpenGLandGLUT(int argc, char **argv)
     CHECK_GL(glClearColor(.7, .7, .7, 1.0));     
 
     // Set up lighting and material properties
-    GLfloat lightPos0[] = {0.0, 10.0, 0.0, 10.0}; 
-    GLfloat lightAmb0[] = {0.2, 0.2, 0.2, .1}; 
-    GLfloat lightDiff0[] = {1.0, 0.0, 0.0, 1.0}; 
-    GLfloat lightSpec0[] = {1.0, 0.0, 0.0, 0.0}; 
+    GLfloat lightPos0[] = {0.0, -10.0, 3.0, 0.0}; 
+    GLfloat lightAmb0[] = {0.2, 0.2, 0.2, 1.0}; 
+    GLfloat lightDiff0[] = {1.0, 0.0, 0.0, .2}; 
+    GLfloat lightSpec0[] = {1.0, 0.0, 0.0, 1.0}; 
  
     CHECK_GL(glLightfv(GL_LIGHT0, GL_POSITION, lightPos0));   
     CHECK_GL(glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb0)); 
@@ -307,7 +247,7 @@ void initOpenGLandGLUT(int argc, char **argv)
     CHECK_GL(glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpec0));    
 
     CHECK_GL(glEnable(GL_COLOR_MATERIAL));
-    CHECK_GL(glShadeModel (GL_FLAT));
+    CHECK_GL(glShadeModel (GL_SMOOTH));
    
     // Set camera coordinates
     double theta = camTheta*PI/180.0; 

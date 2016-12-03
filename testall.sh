@@ -9,13 +9,10 @@
 LLI="lli"
 #LLI="/usr/local/opt/llvm/bin/lli"
 
-# Path to the shapeshifter compiler.  Usually "./shapeshifter.native"
+# Path to the ShapeShifter compiler. 
 # Try "_build/shapeshifter.native" if ocamlbuild was unable to create a symbolic link.
-
-make
-
-SHAPESHIFTER="./shapeshifter.native"
-#SHAPESHIFTER="_build/shapeshifter.native"
+SHAPE="./shapeshifter.native"
+#SHAPE="_build/shapeshifter.native"
 
 # Set time limit for all operations
 ulimit -t 30
@@ -28,17 +25,13 @@ globalerror=0
 keep=0
 
 Usage() {
-    echo "Usage: testall.sh [options] [.mc files]"
+    echo "Usage: testall.sh [options] [.shift files]"
     echo "-k    Keep intermediate files"
     echo "-h    Print this help"
     exit 1
 }
 
 SignalError() {
-# Function for printing our error message when error =/= 0. 
-# RK: I think there's an error here, because it says every thing has failed...
-# RK: even our test_hello_world.shift, which we know works
-
     if [ $error -eq 0 ] ; then
 	echo "FAILED"
 	error=1
@@ -81,11 +74,8 @@ RunFail() {
 Check() {
     error=0
     basename=`echo $1 | sed 's/.*\\///
-                             s/.mc//'`
-# This is where the ref file is made (what we compare .out to...)
-# Don't know if it's working... / what is happening with sed... 
-    
-    reffile=`echo $1 | sed 's/.mc$//'`
+                             s/.shift//'`
+    reffile=`echo $1 | sed 's/.shift$//'`
     basedir="`echo $1 | sed 's/\/[^\/]*$//'`/."
 
     echo -n "$basename..."
@@ -96,7 +86,7 @@ Check() {
     generatedfiles=""
 
     generatedfiles="$generatedfiles ${basename}.ll ${basename}.out" &&
-    Run "$SHAPESHIFTER" "<" $1 ">" "${basename}.ll" &&
+    Run "$SHAPE" "<" $1 ">" "${basename}.ll" &&
     Run "$LLI" "${basename}.ll" ">" "${basename}.out" &&
     Compare ${basename}.out ${reffile}.out ${basename}.diff
 
@@ -117,8 +107,8 @@ Check() {
 CheckFail() {
     error=0
     basename=`echo $1 | sed 's/.*\\///
-                             s/.mc//'`
-    reffile=`echo $1 | sed 's/.mc$//'`
+                             s/.shift//'`
+    reffile=`echo $1 | sed 's/.shift$//'`
     basedir="`echo $1 | sed 's/\/[^\/]*$//'`/."
 
     echo -n "$basename..."
@@ -129,7 +119,7 @@ CheckFail() {
     generatedfiles=""
 
     generatedfiles="$generatedfiles ${basename}.err ${basename}.diff" &&
-    RunFail "$SHAPESHIFTER" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
+    RunFail "$SHAPE" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
     Compare ${basename}.err ${reffile}.err ${basename}.diff
 
     # Report the status and clean up the generated files

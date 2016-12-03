@@ -1,0 +1,11 @@
+int scene() {
+    double x;
+    double y;
+    double z;
+    x = 5.5;
+    y = 6.5;
+    z = x + y;
+    print(x);
+    print(y);
+    print(z);
+}
