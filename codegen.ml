@@ -60,15 +60,8 @@ let translate (globals, functions) =
       let init = L.const_int (ltype_of_typ t) 0
       in StringMap.add n (L.define_global n init the_module) m in
     List.fold_left global_var StringMap.empty globals in
-
+ 
   (* Declare system functions we need *)
-  (* int execv const char *path, char *const argv[] *)
-  let execv_t = L.function_type i32_t [| i8_pt ; L.pointer_type i8_pt |] in   
-  let execv_func = L.declare_function "execv" execv_t the_module in
-
-  (* int execl const char *path, const char *arg, ...*)
-  let execl_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
-  let execl_func = L.declare_function "execl" execl_t the_module in
 
   let system_t = L.function_type i32_t [| i8_pt |] in
   let system_func = L.declare_function "system" system_t the_module in
@@ -100,6 +93,15 @@ let translate (globals, functions) =
       	if fdecl.A.fname = "scene" then "main" else fdecl.A.fname in
     let (the_function, _) = StringMap.find name function_decls in
     let builder = L.builder_at_end context (L.entry_block the_function) in
+
+
+    (* Declare the strings we need *)
+  
+    let cork_exec = "./graphics/cork/bin/cork" 
+      and cork_trans = "-translate" 
+      and tetra_file = "./graphics/.primitives/tetra.off"
+   in
+
 
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
     let dbl_format_str = L.build_global_stringptr "%f\n" "fmt" builder in
@@ -221,28 +223,14 @@ let translate (globals, functions) =
 
 	    )
       | A.Call ("Translate", [s; x; y; z]) ->
-            let syscmd_str = L.build_global_stringptr "ls ../" "syscmd" builder in
-            L.build_call system_func [| syscmd_str |] "translatef" builder
+            let shape_file = "~/Desktop/tetra.off" in
+            let transa_list = [cork_exec; cork_trans; shape_file; "0"; "1"; "0"] in  
+            let transcmd_str = String.concat " " transa_list in            
 
-(*
-                let arg0_str = L.build_global_stringptr "/bin/ls" "trans" builder in
-                let arg1_str = L.build_global_stringptr "ls" "trans" builder in
-                let arg2_str = L.build_global_stringptr "-l" "trans" builder in
-                let arg3_str = L.build_global_stringptr "0" "trans" builder in
-                    L.build_call execl_func [| arg0_str; arg1_str; arg2_str; arg3_str |] "translatef" builder
-*)
-(*
-      			let string_head = expr builder (List.hd[e]) in 
-      			let zero_const = L.const_int i32_t 0 in
-      			let str = L.build_in_bounds_gep string_head [| zero_const |] "str_printf" builder in
-      				L.build_call printf_func [| str |] "str_printf" builder
-*)
-
-        (* 
-          let exec_str = "ls" in
-          let exec_exp = expr builder (A.StrLit(exec_str)) in
-          L.build_call printf_func [| exec_exp|] "trans_printf" builder 
-         *)
+	        let string_head = expr builder (A.StrLit transcmd_str) in 
+      	    let zero_const = L.const_int i32_t 0 in
+      	    let str = L.build_in_bounds_gep string_head [| zero_const |] "transcall_str" builder in
+            L.build_call system_func [| str |] "translatef" builder
 
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
