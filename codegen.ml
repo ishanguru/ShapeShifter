@@ -36,11 +36,15 @@ module StringMap = Map.Make(String)
 let translate (globals, functions) =
   let context = L.global_context () in
   let the_module = L.create_module context "ShapeShifter"
-  and i32_t  = L.i32_type  context
-  and i8_t   = L.i8_type   context
-  and i1_t   = L.i1_type   context
-  and void_t = L.void_type context
-  and double_t = L.double_type context in
+  and i32_t    = L.i32_type  context
+  and i8_t     = L.i8_type   context
+  and i1_t     = L.i1_type   context
+  and void_t   = L.void_type context
+  and double_t = L.double_type context
+  and i64_t    = L.i64_type  context in
+  let i64_pt   = L.pointer_type i64_t 
+  and i32_pt   = L.pointer_type i32_t 
+  and i8_pt    = L.pointer_type i8_t in
 
   let ltype_of_typ = function
       A.Int -> i32_t
@@ -55,6 +59,18 @@ let translate (globals, functions) =
       let init = L.const_int (ltype_of_typ t) 0
       in StringMap.add n (L.define_global n init the_module) m in
     List.fold_left global_var StringMap.empty globals in
+
+  (* Declare system functions we need *)
+  (* int execv const char *path, char *const argv[] *)
+  let execv_t = L.function_type i32_t [| i8_pt; i64_pt |] in 
+  let execv_func = L.declare_function "execv" execv_t the_module in
+
+
+
+  (* Declare Shapeshifter functions (need to finish enumerating) *)
+  (*let _ = L.declare_function "Translate" translate_ty the_module in 
+  ()*)  
+
 
   (* Declare printf(), which the print built-in function will call *)
   let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in

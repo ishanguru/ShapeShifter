@@ -108,6 +108,8 @@ void special(int key, int x, int y)
 {
     double dcam = 1; 
     switch (key) {
+    // Want to not flip the damn thing when camTheta does the thing; 
+    // Change up? 
     case GLUT_KEY_UP: 
         camTheta -= dcam; 
         break; 
@@ -218,9 +220,15 @@ void uploadMeshData()
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    CHECK_GL(glEnable(GL_LIGHTING));
+    CHECK_GL(glEnable(GL_LIGHT0));
+    CHECK_GL(glEnable(GL_DEPTH_TEST));
+
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     CHECK_GL(gluLookAt(camX, camY, camZ, 0, 0, 0, 0, 1, 0));
+    //CHECK_GL(gluLookAt(camX, camY, camZ, 0, 0, 0, 0, 1, 0));
+
 
     // Draw axes
     glBegin(GL_LINES);  
@@ -235,14 +243,7 @@ void display()
     glVertex3f(0.0, 0.0, 100.0); 
     glEnd(); 
 
-
-    CHECK_GL(glEnable(GL_LIGHTING));
-    CHECK_GL(glEnable(GL_LIGHT0));
-    CHECK_GL(glEnable(GL_DEPTH_TEST));
- 
     glColor3f(.2, .2, .2);
-
-
 
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, vbo)); 
     CHECK_GL(glEnableClientState(GL_VERTEX_ARRAY));
@@ -297,7 +298,7 @@ void initOpenGLandGLUT(int argc, char **argv)
 
     // Set up lighting and material properties
     GLfloat lightPos0[] = {0.0, 10.0, 0.0, 10.0}; 
-    GLfloat lightAmb0[] = {0.2, 0.2, 0.2, .1}; 
+    GLfloat lightAmb0[] = {0.2, 0.2, 0.2, .0}; 
     GLfloat lightDiff0[] = {1.0, 0.0, 0.0, 1.0}; 
     GLfloat lightSpec0[] = {1.0, 0.0, 0.0, 0.0}; 
  
@@ -308,17 +309,14 @@ void initOpenGLandGLUT(int argc, char **argv)
 
     CHECK_GL(glEnable(GL_COLOR_MATERIAL));
     CHECK_GL(glShadeModel (GL_FLAT));
-   
+ 
     // Set camera coordinates
     double theta = camTheta*PI/180.0; 
     double phi = camPhi*PI/180.0;
     camX = camR * sin(theta) * sin(phi);
     camY = camR * cos(theta);
     camZ = camR * cos(theta) * sin(phi); 
-  
-
-
- 
+   
     reshape(windowWidth, windowHeight); 
 }
 
