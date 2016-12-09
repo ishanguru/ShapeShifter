@@ -99,6 +99,7 @@ let translate (globals, functions) =
   
     let cork_exec = "./graphics/cork/bin/cork" 
       and cork_trans = "-translate" 
+      and render_exec = "./graphics/display/sshiftdisplay"
       and tetra_file = "./graphics/.primitives/tetra.off"
    in
 
@@ -231,6 +232,17 @@ let translate (globals, functions) =
       	    let zero_const = L.const_int i32_t 0 in
       	    let str = L.build_in_bounds_gep string_head [| zero_const |] "transcall_str" builder in
             L.build_call system_func [| str |] "translatef" builder
+
+      | A.Call ("Render", [s]) -> 
+            let shape_file = "~/Desktop/tetra.off" in 
+            let renda_list = [render_exec; shape_file] in
+            let rendcmd_str = String.concat " " renda_list in
+            let string_head = expr builder (A.StrLit rendcmd_str) in
+            let zero_const = L.const_int i32_t 0 in
+            let str = L.build_in_bounds_gep string_head [| zero_const |] "rendcall_str" builder in
+            L.build_call system_func [| str |] "renderf" builder
+
+
 
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
