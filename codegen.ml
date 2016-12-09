@@ -214,11 +214,23 @@ let translate (globals, functions) =
       		| A.Id id -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
 
 	    )
-
+      | A.Call ("what", [e]) -> 
+           let num = List.length [e] in 
+           L.build_call printf_func [| int_format_str; (expr builder (A.IntLit(num))) |] "what_intf" builder 
+          (*
+           let string_head = expr builder (A.StrLit("what")) in 
+           let zero_const = L.const_int i32_t 0 in 
+           let str = L.build_in_bounds_gep string_head [| zero_const |] "whatfu" builder in
+           L.build_call printf_func [| str |] "whatfu" builder
+*)
       | A.Call ("Translate", [e]) -> 
-          let exec_str = "ls" in
+            L.const_int i32_t 0
+      
+
+         (* let exec_str = "ls" in
           let exec_exp = expr builder (A.StrLit(exec_str)) in
-          L.build_call printf_func [| exec_exp|] "trans_printf" builder
+          L.build_call printf_func [| exec_exp|] "trans_printf" builder *)
+
 (*
           let exec_argstr = ["./"; "\x00"] in
           let exec_args = expr builder (exec_argstr) in 
