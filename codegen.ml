@@ -66,6 +66,9 @@ let translate (globals, functions) =
   let execv_t = L.function_type i32_t [| i8_pt ; L.pointer_type i8_pt |] in   
   let execv_func = L.declare_function "execv" execv_t the_module in
 
+  (* int execl const char *path, const char *arg, ...*)
+  let execl_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
+  let execl_func = L.declare_function "execl" execl_t the_module in
 
   (* Declare Shapeshifter functions (need to finish enumerating) *)
   (* void Translate (Shape s, double x, double y, double z ) *)
@@ -214,24 +217,25 @@ let translate (globals, functions) =
       		| A.Id id -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
 
 	    )
-      | A.Call ("what", [e1; e2]) -> 
-           let string_head = expr builder (A.StrLit("what")) in 
-           let zero_const = L.const_int i32_t 0 in 
-           let str = L.build_in_bounds_gep string_head [| zero_const |] "whatfu" builder in
-           L.build_call printf_func [| str |] "whatfu" builder
-
-      | A.Call ("Translate", [e]) -> 
-            L.const_int i32_t 0
-      
-
-         (* let exec_str = "ls" in
-          let exec_exp = expr builder (A.StrLit(exec_str)) in
-          L.build_call printf_func [| exec_exp|] "trans_printf" builder *)
+      | A.Call ("Translate", [s; x; y; z]) ->
+                let arg0_str = L.build_global_stringptr "/bin/ls" "trans" builder in
+                let arg1_str = L.build_global_stringptr "ls" "trans" builder in
+                let arg2_str = L.build_global_stringptr "-l" "trans" builder in
+                let arg3_str = L.build_global_stringptr "0" "trans" builder in
+                    L.build_call execl_func [| arg0_str; arg1_str; arg2_str; arg3_str |] "translatef" builder
 
 (*
-          let exec_argstr = ["./"; "\x00"] in
-          let exec_args = expr builder (exec_argstr) in 
-          L.build_call execv_func [|exec_exp(* ;exec_args *)|] "Translate" builder *)
+      			let string_head = expr builder (List.hd[e]) in 
+      			let zero_const = L.const_int i32_t 0 in
+      			let str = L.build_in_bounds_gep string_head [| zero_const |] "str_printf" builder in
+      				L.build_call printf_func [| str |] "str_printf" builder
+*)
+
+        (* 
+          let exec_str = "ls" in
+          let exec_exp = expr builder (A.StrLit(exec_str)) in
+          L.build_call printf_func [| exec_exp|] "trans_printf" builder 
+         *)
 
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
