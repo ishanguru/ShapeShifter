@@ -1,0 +1,12 @@
+int scene() {
+    int a;
+    int b;
+    int c;
+    int d;
+    a = 10;
+    b = 8;
+    c = a - b;
+    d = b - a;
+    print(c);
+    print(d);
+}

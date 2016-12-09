@@ -6,5 +6,4 @@ graphics/display/sshiftdisplay
 *.o
 graphics/sstools
 *.ll
-*.out
 shapeshifter.native

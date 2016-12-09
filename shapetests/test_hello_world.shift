@@ -1,4 +1,4 @@
-void scene() {
+int scene() {
     print("Hello world!");
 }
 
