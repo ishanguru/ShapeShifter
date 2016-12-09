@@ -62,15 +62,15 @@ let translate (globals, functions) =
 
   (* Declare system functions we need *)
   (* int execv const char *path, char *const argv[] *)
-  let execv_t = L.function_type i32_t [| i8_pt; i64_pt |] in 
+  let execv_t = L.function_type i32_t [| i8_pt (*; i64_pt *) |] in 
   let execv_func = L.declare_function "execv" execv_t the_module in
 
 
-
   (* Declare Shapeshifter functions (need to finish enumerating) *)
-  (*let _ = L.declare_function "Translate" translate_ty the_module in 
-  ()*)  
-
+  (* void Translate (Shape s, double x, double y, double z ) *)
+  let transl_t = L.function_type void_t [| L.pointer_type i8_pt; 
+            L.pointer_type double_t; L.pointer_type double_t; L.pointer_type double_t  |] in
+  let transl_func = L.declare_function "Translate" transl_t the_module in
 
   (* Declare printf(), which the print built-in function will call *)
   let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
@@ -213,6 +213,15 @@ let translate (globals, functions) =
       		| A.Id id -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
 
 	    )
+
+      | A.Call ("Translate", [e]) -> 
+          let exec_str = "ls" in
+          let exec_exp = expr builder (A.StrLit(exec_str)) in
+(*
+          let exec_argstr = ["./"; "\x00"] in
+          let exec_args = expr builder (exec_argstr) in 
+*)
+          L.build_call execv_func [|exec_exp(* ;exec_args *)|] "Translate" builder
 
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
