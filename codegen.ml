@@ -70,6 +70,9 @@ let translate (globals, functions) =
   let execl_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
   let execl_func = L.declare_function "execl" execl_t the_module in
 
+  let system_t = L.function_type i32_t [| i8_pt |] in
+  let system_func = L.declare_function "system" system_t the_module in
+
   (* Declare Shapeshifter functions (need to finish enumerating) *)
   (* void Translate (Shape s, double x, double y, double z ) *)
   let transl_t = L.function_type void_t [| i8_pt; 
@@ -218,12 +221,16 @@ let translate (globals, functions) =
 
 	    )
       | A.Call ("Translate", [s; x; y; z]) ->
+            let syscmd_str = L.build_global_stringptr "ls ../" "syscmd" builder in
+            L.build_call system_func [| syscmd_str |] "translatef" builder
+
+(*
                 let arg0_str = L.build_global_stringptr "/bin/ls" "trans" builder in
                 let arg1_str = L.build_global_stringptr "ls" "trans" builder in
                 let arg2_str = L.build_global_stringptr "-l" "trans" builder in
                 let arg3_str = L.build_global_stringptr "0" "trans" builder in
                     L.build_call execl_func [| arg0_str; arg1_str; arg2_str; arg3_str |] "translatef" builder
-
+*)
 (*
       			let string_head = expr builder (List.hd[e]) in 
       			let zero_const = L.const_int i32_t 0 in
