@@ -1,0 +1,13 @@
+
+int scene() {
+    double a;
+    double b;
+    double c;
+
+    a = 10.0; 
+    b = 2.5; 
+    c = b * a; 
+    print(c); 
+
+}
+

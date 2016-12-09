@@ -1,0 +1,9 @@
+int scene() {
+    double x;
+    double y;
+    double z;
+    x = 10.5;
+    y = 5.0;
+    z = x - y;
+    print(z);
+}

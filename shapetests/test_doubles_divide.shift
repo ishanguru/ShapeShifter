@@ -1,6 +1,5 @@
-// Make sure that doubles are recognized
 
-void scene() {
+int scene() {
     double a;
     double b;
     double c;
