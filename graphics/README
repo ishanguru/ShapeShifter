@@ -6,6 +6,11 @@ underlying mesh representation and modification.
 
 For display, OpenGL is used in conjunction with the utility toolkit glut. 
 
+To insall the libraries: 
+	sudo apt-get install freeglut3-dev
+	sudo apt-get install libgmp3
+	sudo apt-get install libglew-dev
+
 TODO: 
     + Fix the display (some of the shapes show up weirdly; like ballA.off)
     - Fix lighting
