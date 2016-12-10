@@ -11,6 +11,9 @@ To insall the libraries:
 	sudo apt-get install libgmp3
 	sudo apt-get install libglew-dev
 
+Make sure you don't have 3D acceleration enabled in the settings 
+for your virtual machine!
+
 TODO: 
     + Fix the display (some of the shapes show up weirdly; like ballA.off)
     - Fix lighting
