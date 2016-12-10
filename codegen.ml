@@ -16,6 +16,7 @@ module L = Llvm
 module A = Ast
 
 module StringMap = Map.Make(String)
+module TypeMap = Map.Make(String)
 
 (* 
 
@@ -106,7 +107,7 @@ let translate (globals, functions) =
 
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
     let dbl_format_str = L.build_global_stringptr "%f\n" "fmt" builder in
-    
+
     (* Construct the function's "locals": formal arguments and locally
        declared variables.  Allocate each on the stack, initialize their
        value, if appropriate, and remember their values in the "locals" map *)
@@ -129,6 +130,24 @@ let translate (globals, functions) =
     let lookup n = try StringMap.find n local_vars
                    with Not_found -> StringMap.find n global_vars
     in
+
+    let type_vars = 
+    
+    	let add_type m(t, n) = 
+    	TypeMap.add n t m in
+
+    	let symbolsMap = List.fold_left add_type TypeMap.empty fdecl.A.formals in
+    	List.fold_left add_type symbolsMap fdecl.A.locals in
+
+    	let print_map_pair key value =
+			print_endline (key ^ " " ^ value ^ "\n") in
+    	let lookup n = try StringMap.find n local_vars
+                   with Not_found -> StringMap.find n global_vars
+    	in
+    
+	let lookup_type n = try TypeMap.find n type_vars
+               with Not_found -> StringMap.find n type_vars
+	in
 
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
@@ -183,20 +202,41 @@ let translate (globals, functions) =
 		  ) e1' e2' "tmp" builder
 
 		| A.Id id ->   
-		  (match op with
-		    	A.Add     -> L.build_fadd
-		  		| A.Sub     -> L.build_fsub
-		  		| A.Mult    -> L.build_fmul
-	          	| A.Div     -> L.build_fdiv
-		  		| A.And     -> L.build_and
-		  		| A.Or      -> L.build_or
-		  		| A.Equal   -> L.build_fcmp L.Fcmp.Oeq
-		  		| A.Neq     -> L.build_fcmp L.Fcmp.One
-		  		| A.Less    -> L.build_fcmp L.Fcmp.Ult
-		  		| A.Leq     -> L.build_fcmp L.Fcmp.Ole
-		  		| A.Greater -> L.build_fcmp L.Fcmp.Ogt
-		  		| A.Geq     -> L.build_fcmp L.Fcmp.Oge
-		  ) e1' e2' "tmp" builder
+		  (* We need to match with each type that ID can take, use StringMap for storing types *)
+		  let variable_type = lookup_type id in
+		  (
+		  	match variable_type with
+		  	
+		  	| A.Dbl ->  (match op with
+		    				A.Add     -> L.build_fadd
+		  					| A.Sub     -> L.build_fsub
+		  					| A.Mult    -> L.build_fmul
+				          	| A.Div     -> L.build_fdiv
+					  		| A.And     -> L.build_and
+					  		| A.Or      -> L.build_or
+					  		| A.Equal   -> L.build_fcmp L.Fcmp.Oeq
+					  		| A.Neq     -> L.build_fcmp L.Fcmp.One
+					  		| A.Less    -> L.build_fcmp L.Fcmp.Ult
+					  		| A.Leq     -> L.build_fcmp L.Fcmp.Ole
+					  		| A.Greater -> L.build_fcmp L.Fcmp.Ogt
+					  		| A.Geq     -> L.build_fcmp L.Fcmp.Oge
+					  	) e1' e2' "tmp" builder
+		  	| A.Int ->  (match op with
+					    	A.Add     -> L.build_add
+					  		| A.Sub     -> L.build_sub
+					  		| A.Mult    -> L.build_mul
+				          	| A.Div     -> L.build_sdiv
+					  		| A.And     -> L.build_and
+					  		| A.Or      -> L.build_or
+					  		| A.Equal   -> L.build_icmp L.Icmp.Eq
+					  		| A.Neq     -> L.build_icmp L.Icmp.Ne
+					  		| A.Less    -> L.build_icmp L.Icmp.Slt
+					  		| A.Leq     -> L.build_icmp L.Icmp.Sle
+					  		| A.Greater -> L.build_icmp L.Icmp.Sgt
+					  		| A.Geq     -> L.build_icmp L.Icmp.Sge
+					  	) e1' e2' "tmp" builder
+		  )
+			  
 	  )
       
       | A.Unop(op, e) ->
@@ -220,11 +260,19 @@ let translate (globals, functions) =
 
       		| A.DblLit d -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
       		| A.IntLit i -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
-      		| A.Id id -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
+      		| A.Id id -> 
+      				let variable_type = lookup_type id in
+      				(
+      					match variable_type with 
+      					| A.Dbl -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
+      					| A.Int -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
+      				)
 
 	    )
+
       | A.Call ("Translate", [s; x; y; z]) ->
-            let shape_file = "~/Desktop/tetra.off" in
+      		(* Turn x into a string here - also, link file to resource folder *)
+            let shape_file = "~/Desktop/tetra.off" in 
             let transa_list = [cork_exec; cork_trans; shape_file; "0"; "1"; "0"] in  
             let transcmd_str = String.concat " " transa_list in            
 
@@ -241,8 +289,6 @@ let translate (globals, functions) =
             let zero_const = L.const_int i32_t 0 in
             let str = L.build_in_bounds_gep string_head [| zero_const |] "rendcall_str" builder in
             L.build_call system_func [| str |] "renderf" builder
-
-
 
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in

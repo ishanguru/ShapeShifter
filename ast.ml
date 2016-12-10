@@ -41,7 +41,7 @@ type stmt =
 type func_decl = {
     typ : typ;
     fname : string;
-    formals : bind list;
+    formals : bind list; (* Formals are a list of type name tuples *)
     locals : bind list;
     body : stmt list;
   }
