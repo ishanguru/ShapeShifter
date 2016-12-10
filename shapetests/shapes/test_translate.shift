@@ -1,0 +1,11 @@
+// Translate a tetra
+
+void scene() {
+    Shape tet;
+
+    tet = TETRA;
+
+    Translate(tet, 0.0, 1.0, 0.0);
+    Render(tet);
+}
+
