@@ -16,11 +16,11 @@ type expr =
   | DblLit of float
   | StrLit of string
   | BoolLit of bool
-  | SphereObj
-  | CubeObj
-  | CylinderObj
-  | TetraObj
-  | ConeObj
+  | SpherePrim
+  | CubePrim
+  | CylinderPrim
+  | TetraPrim
+  | ConePrim
   | Null
   | Id of string
   | Binop of expr * op * expr
@@ -77,11 +77,11 @@ let rec string_of_expr = function
   | StrLit(l) -> l
   | BoolLit(true) -> "true"
   | BoolLit(false) -> "false"
-  | SphereObj -> "SPHERE"
-  | CubeObj -> "CUBE"
-  | CylinderObj -> "CYLINDER"
-  | TetraObj -> "TETRA"
-  | ConeObj -> "CONE"
+  | SpherePrim -> "SPHERE"
+  | CubePrim -> "CUBE"
+  | CylinderPrim -> "CYLINDER"
+  | TetraPrim -> "TETRA"
+  | ConePrim -> "CONE"
   | Null -> "NULL"
   | Id(s) -> s
   | Binop(e1, o, e2) ->

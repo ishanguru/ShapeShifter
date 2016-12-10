@@ -67,10 +67,6 @@ let translate (globals, functions) =
   let system_func = L.declare_function "system" system_t the_module in
 
   (* Declare Shapeshifter functions (need to finish enumerating) *)
-  (* void Translate (Shape s, double x, double y, double z ) *)
-  let transl_t = L.function_type void_t [| i8_pt; 
-            L.pointer_type double_t; L.pointer_type double_t; L.pointer_type double_t  |] in
-  let transl_func = L.declare_function "Translate" transl_t the_module in
 
   (* Declare printf(), which the print built-in function will call *)
   let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
@@ -230,7 +226,7 @@ let translate (globals, functions) =
 
 	        let string_head = expr builder (A.StrLit transcmd_str) in 
       	    let zero_const = L.const_int i32_t 0 in
-      	    let str = L.build_in_bounds_gep string_head [| zero_const |] "transcall_str" builder in
+            let str = L.build_in_bounds_gep string_head [| zero_const |] "transcall_str" builder in
             L.build_call system_func [| str |] "translatef" builder
 
       | A.Call ("Render", [s]) -> 

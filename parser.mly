@@ -11,7 +11,7 @@ open Ast
 %token RETURN IF ELSE FOR WHILE BREAK
 %token INT BOOL DBL STRING VOID
 %token SHAPE
-%token SPHERE_OBJ CUBE_OBJ CYLINDER_OBJ TETRA_OBJ CONE_OBJ
+%token SPHERE_PRIM CUBE_PRIM CYLINDER_PRIM TETRA_PRIM CONE_PRIM
 %token <int> INT_LIT
 %token <string> ID
 %token <string> STR_LIT
@@ -99,11 +99,11 @@ expr:
   | INT_LIT          { IntLit($1) }
   | DBL_LIT          { DblLit($1) }
   | STR_LIT          { StrLit($1) }
-  | SPHERE_OBJ       { SphereObj }
-  | CUBE_OBJ         { CubeObj }
-  | CYLINDER_OBJ     { CylinderObj }
-  | TETRA_OBJ        { TetraObj }
-  | CONE_OBJ         { ConeObj }
+  | SPHERE_PRIM       { SpherePrim }
+  | CUBE_PRIM         { CubePrim }
+  | CYLINDER_PRIM     { CylinderPrim }
+  | TETRA_PRIM        { TetraPrim }
+  | CONE_PRIM         { ConePrim }
   | TRUE             { BoolLit(true) }
   | FALSE            { BoolLit(false) }
   | NULL             { Null }
