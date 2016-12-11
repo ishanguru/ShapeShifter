@@ -18,21 +18,9 @@ module A = Ast
 module StringMap = Map.Make(String)
 module TypeMap = Map.Make(String)
 
-(* 
 
-	The types that we need to add: 
-
-	Double
-	String
-
-	Shape
-	Sphere
-	Cube
-	Tetra
-	Cone
-	Cylinder
-
- *)
+let local_vars:(string, L.llvalue) Hashtbl.t = Hashtbl.create 50
+let type_map:(string, A.typ) Hashtbl.t = Hashtbl.create 50
 
 let translate (globals, functions) =
   let context = L.global_context () in
@@ -63,7 +51,6 @@ let translate (globals, functions) =
     List.fold_left global_var StringMap.empty globals in
  
   (* Declare system functions we need *)
-
   let system_t = L.function_type i32_t [| i8_pt |] in
   let system_func = L.declare_function "system" system_t the_module in
 
@@ -98,7 +85,7 @@ let translate (globals, functions) =
       and cork_trans = "-translate" 
       and render_exec = "./graphics/display/sshiftdisplay"
       and tetra_file = "./graphics/.primitives/tetra.off"
-   in
+    in
 
 
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
@@ -107,44 +94,34 @@ let translate (globals, functions) =
     (* Construct the function's "locals": formal arguments and locally
        declared variables.  Allocate each on the stack, initialize their
        value, if appropriate, and remember their values in the "locals" map *)
-    let local_vars =
-
-      let add_formal m (t, n) p = L.set_value_name n p;
-	let local = L.build_alloca (ltype_of_typ t) n builder in
-	ignore (L.build_store p local builder);
-	StringMap.add n local m in
-
-      let add_local m (t, n) =
-	let local_var = L.build_alloca (ltype_of_typ t) n builder
-	in StringMap.add n local_var m in
-
-      let formals = List.fold_left2 add_formal StringMap.empty fdecl.A.formals
-          (Array.to_list (L.params the_function)) in
-      List.fold_left add_local formals fdecl.A.locals in
-
-    (* Return the value for a variable or formal argument *)
-    let lookup n = try StringMap.find n local_vars
-                   with Not_found -> StringMap.find n global_vars
+    let _ =
+        ignore (Hashtbl.clear local_vars);
+        ignore (Hashtbl.clear type_map);
+        let add_formal (t, n) p =
+            L.set_value_name n p;
+            let local = L.build_alloca (ltype_of_typ t) n builder in
+              ignore (L.build_store p local builder);
+              ignore (Hashtbl.add local_vars n local);
+        in
+        List.iter2 add_formal fdecl.A.formals (Array.to_list (L.params the_function))
     in
 
-    let type_vars = 
+    let lookup n =
+        try Hashtbl.find local_vars n
+        with Not_found -> StringMap.find n global_vars
+    in
+                   
+    let _ =
+        let add_type (t, n) =
+            Hashtbl.add type_map n t
+        in
+        List.iter add_type fdecl.A.formals
+    in
+
+    let lookup_type n =
+        Hashtbl.find type_map n
+    in
     
-    	let add_type m(t, n) = 
-    	TypeMap.add n t m in
-
-    	let symbolsMap = List.fold_left add_type TypeMap.empty fdecl.A.formals in
-    	List.fold_left add_type symbolsMap fdecl.A.locals in
-
-    	let print_map_pair key value =
-			print_endline (key ^ " " ^ value ^ "\n") in
-    	let lookup n = try StringMap.find n local_vars
-                   with Not_found -> StringMap.find n global_vars
-    	in
-    
-	let lookup_type n = try TypeMap.find n type_vars
-               with Not_found -> StringMap.find n type_vars
-	in
-
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
       | A.DblLit d -> L.const_float double_t d
@@ -238,7 +215,7 @@ let translate (globals, functions) =
       | A.Unop(op, e) ->
 	  let e' = expr builder e in
 	  (match op with
-	  	  A.Neg     -> L.build_neg
+	  	    A.Neg     -> L.build_neg
           | A.Not     -> L.build_not) e' "tmp" builder
 
       | A.Assign (s, e) -> let e' = expr builder e in
@@ -341,6 +318,15 @@ let translate (globals, functions) =
 
       | A.For (e1, e2, e3, body) -> stmt builder
 	    ( A.Block [A.Expr e1 ; A.While (e2, A.Block [body ; A.Expr e3]) ] )
+      | A.Local (t, n, e) -> 
+          let local = L.build_alloca (ltype_of_typ t) n builder in
+            ignore (Hashtbl.add local_vars n local);
+            ignore (Hashtbl.add type_map n t);
+          match e with
+            | Noexpr -> builder
+            | _ -> let e' = expr builder e in
+                   ignore (L.build_store e' (lookup n) builder);
+                   builder
     in
 
     (* Build the code for each statement in the function *)

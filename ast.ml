@@ -6,8 +6,7 @@ type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq |
 
 type uop = Neg | Not
 
-type typ = Int | Dbl | Bool | String | Shape | Sphere | Cube |
-           Tetra | Cone | Cylinder | Void
+type typ = Int | Dbl | Bool | String | Shape | Void
 
 type bind = typ * string
 
@@ -37,12 +36,12 @@ type stmt =
   | For of expr * expr * expr * stmt
   | While of expr * stmt
   | Break
+  | Local of typ * string * expr
 
 type func_decl = {
     typ : typ;
     fname : string;
-    formals : bind list; (* Formals are a list of type name tuples *)
-    locals : bind list;
+    formals : bind list;
     body : stmt list;
   }
 
@@ -63,9 +62,9 @@ let string_of_op = function
   | Geq -> ">="
   | And -> "&&"
   | Or -> "||"
-  | Union -> "UN" (* ADDED BY US *)
-  | Intersect -> "IN" (* ADDED BY US *)
-  | Difference -> "DI" (* ADDED BY US *)
+  | Union -> "UN"
+  | Intersect -> "IN"
+  | Difference -> "DI"
 
 let string_of_uop = function
     Neg -> "-"
@@ -92,6 +91,14 @@ let rec string_of_expr = function
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Noexpr -> ""
 
+let string_of_typ = function
+    Int -> "int"
+  | Bool -> "bool"
+  | Dbl -> "double"
+  | String -> "string"
+  | Shape -> "Shape"
+  | Void -> "void"
+
 let rec string_of_stmt = function
     Block(stmts) ->
       "{\n" ^ String.concat "" (List.map string_of_stmt stmts) ^ "}\n"
@@ -105,19 +112,9 @@ let rec string_of_stmt = function
       string_of_expr e3  ^ ") " ^ string_of_stmt s
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
   | Break -> "break"
-
-let string_of_typ = function
-    Int -> "int"
-  | Bool -> "bool"
-  | Dbl -> "double"
-  | String -> "string"
-  | Shape -> "Shape"
-  | Sphere -> "Sphere"
-  | Cube -> "Cube"
-  | Tetra -> "Tetra"
-  | Cone -> "Cone"
-  | Cylinder -> "Cylinder"
-  | Void -> "void"
+  | Local(t, s, e) -> if (String.length (string_of_expr e)) = 0 then
+      string_of_typ t ^ " " ^ s ^ ";\n" else
+      string_of_typ t ^ " " ^ s ^ " = " ^ string_of_expr e ^ ";\n"
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
 
@@ -125,7 +122,6 @@ let string_of_fdecl fdecl =
   string_of_typ fdecl.typ ^ " " ^
   fdecl.fname ^ "(" ^ String.concat ", " (List.map snd fdecl.formals) ^
   ")\n{\n" ^
-  String.concat "" (List.map string_of_vdecl fdecl.locals) ^
   String.concat "" (List.map string_of_stmt fdecl.body) ^
   "}\n"
 
