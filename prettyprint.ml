@@ -72,12 +72,17 @@ let rec  string_of_op obj = (((function Difference -> "Difference"
 | Neg -> "Neg")) obj)
 
  and  string_of_typ obj = (((function Void -> "Void"
+(* TODO: Add subshapes *)
+(* 
 | Cylinder -> "Cylinder"
 | Cone -> "Cone"
 | Tetra -> "Tetra"
 | Cube -> "Cube"
 | Sphere -> "Sphere"
 | Shape -> "Shape"
+| String -> "String"
+*)
+| Shape -> "Shape" 
 | String -> "String"
 | Bool -> "Bool"
 | Dbl -> "Dbl"
@@ -108,14 +113,16 @@ let rec  string_of_op obj = (((function Difference -> "Difference"
 | If(obj1, obj2, obj3) -> "If(" ^ (string_of_expr obj1) ^ ", " ^ (string_of_stmt obj2) ^ ", " ^ (string_of_stmt obj3) ^ ")"
 | Return(x) -> "Return(" ^ string_of_expr x^")"
 | Expr(x) -> "Expr(" ^ string_of_expr x^")"
+| Local (t, n, e) -> "Local(" ^ (string_of_typ t) ^ ", " ^ (string_of_string n) ^ ", " ^ (string_of_expr e) ^ ")"
 | Block(x) -> "Block(" ^ (string_of_list (string_of_stmt)) x^")")) obj)
 
  and  string_of_func_decl obj = (((fun s -> "{" ^
 		inner_indent (fun _ -> newline() ^ ("typ = " ^ string_of_typ s.typ)
  ^ newline() ^ ("fname = " ^ string_of_string s.fname)
  ^ newline() ^ ("formals = " ^ (string_of_list (string_of_bind)) s.formals)
- ^ newline() ^ ("locals = " ^ (string_of_list (string_of_bind)) s.locals)
- ^ newline() ^ ("body = " ^ (string_of_list (string_of_stmt)) s.body)) ^ newline() ^ "}")) obj)
+ (* ^ newline() ^ ("locals = " ^ (string_of_list (string_of_bind)) s.locals) (*TODO: Why is locals not in Ast.func_decl anymore, but formals is?*) *)
+ 
+^ newline() ^ ("body = " ^ (string_of_list (string_of_stmt)) s.body)) ^ newline() ^ "}")) obj)
 
  and  string_of_program obj = (((fun (obj1, obj2) -> "(" ^ ((string_of_list (string_of_bind)) obj1) ^ ", " ^ ((string_of_list (string_of_func_decl)) obj2) ^ ")")) obj)
 
