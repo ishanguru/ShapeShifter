@@ -1,6 +1,13 @@
 (* Ocamllex scanner for ShapeShifter *)
 
-{ open Parser }
+{ 
+  open Parser 
+  
+  let strip_string s = 
+    String.sub s 1 ((String.length s) - 2) 
+
+
+}
 
 let whitespace = [' ' '\t' '\r' '\n']
 let digit = ['0'-'9']
@@ -60,7 +67,7 @@ rule token = parse
   | "false"         { FALSE }
   | integer as lxm  { INT_LIT(int_of_string lxm) }
   | double as lxm   { DBL_LIT(float_of_string lxm) } (* ADDED BY US *)
-  | str_lit as lxm  { STR_LIT(lxm) } (* ADDED BY US *)
+  | str_lit as lxm  { STR_LIT(strip_string lxm) } (* ADDED BY US *)
   | id as lxm       { ID(lxm) }
   | _ as char       { raise (Failure("illegal character " ^ Char.escaped char)) }
   | eof             { EOF }
