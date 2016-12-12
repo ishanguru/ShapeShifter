@@ -1,0 +1,9 @@
+int scene() {
+    string s1 = "why\n";
+    string s2 = "hello\n";
+    string s3 = "there!"; 
+    print (s1);
+    print (s2);
+    print (s3);
+
+}
