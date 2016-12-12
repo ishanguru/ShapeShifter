@@ -16,11 +16,10 @@ module L = Llvm
 module A = Ast
 
 module StringMap = Map.Make(String)
-module TypeMap = Map.Make(String)
-
 
 let local_vars:(string, L.llvalue) Hashtbl.t = Hashtbl.create 50
 let type_map:(string, A.typ) Hashtbl.t = Hashtbl.create 50
+(* Store the underlying filenames for each shape *)
 
 let translate (globals, functions) =
   let context = L.global_context () in
@@ -39,9 +38,9 @@ let translate (globals, functions) =
       A.Int -> i32_t
     | A.Bool -> i1_t
     | A.Void -> void_t
-    (* | A.String ->  *)
+    | A.String -> i8_pt 
     | A.Dbl -> double_t
-    | A.Shape -> i32_t (*Make Shape an int just to be able to test translate *) in
+    | A.Shape -> i8_pt (*Make Shape an int just to be able to test translate *)  in
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars =
@@ -222,15 +221,16 @@ let translate (globals, functions) =
 	                   ignore (L.build_store e' (lookup s) builder); e'
 
       | A.Call ("print", [e]) ->
+            let print_strlit s =
+                let string_head = expr builder (s) in
+                let zero_const = L.const_int i32_t 0 in
+                let str = L.build_in_bounds_gep string_head [| zero_const |] "str_printf" builder in
+                L.build_call printf_func [| str |] "str_printf" builder in  
 
       	(match List.hd[e] with 
 
-      		| A.StrLit s -> 
-      			let string_head = expr builder (List.hd[e]) in 
-      			let zero_const = L.const_int i32_t 0 in
-      			let str = L.build_in_bounds_gep string_head [| zero_const |] "str_printf" builder in
-      				L.build_call printf_func [| str |] "str_printf" builder
-
+      		| A.StrLit s ->
+                print_strlit (List.hd[e])
       		| A.DblLit d -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
       		| A.IntLit i -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
       		| A.Id id -> 
@@ -239,7 +239,9 @@ let translate (globals, functions) =
       					match variable_type with 
       					| A.Dbl -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
       					| A.Int -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
-      				)
+                        | A.String -> print_strlit (List.hd[e])         
+                            	
+                    )
 
 	    )
 
@@ -323,7 +325,7 @@ let translate (globals, functions) =
             ignore (Hashtbl.add local_vars n local);
             ignore (Hashtbl.add type_map n t);
           match e with
-            | Noexpr -> builder
+            | A.Noexpr -> builder
             | _ -> let e' = expr builder e in
                    ignore (L.build_store e' (lookup n) builder);
                    builder
