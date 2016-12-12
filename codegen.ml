@@ -17,8 +17,11 @@ module A = Ast
 
 module StringMap = Map.Make(String)
 
+let _ = Random.self_init()
+
 let local_vars:(string, L.llvalue) Hashtbl.t = Hashtbl.create 50
 let type_map:(string, A.typ) Hashtbl.t = Hashtbl.create 50
+let shape_map:(string, string) Hashtbl.t = Hashtbl.create 50
 (* Store the underlying filenames for each shape *)
 
 let translate (globals, functions) =
@@ -84,6 +87,7 @@ let translate (globals, functions) =
       and cork_trans = "-translate" 
       and render_exec = "./graphics/display/sshiftdisplay"
       and tetra_file = "./graphics/.primitives/tetra.off"
+      and tmp_folder = "./.tmp/"
     in
 
 
@@ -96,7 +100,13 @@ let translate (globals, functions) =
     let _ =
         ignore (Hashtbl.clear local_vars);
         ignore (Hashtbl.clear type_map);
+        ignore (Hashtbl.clear shape_map);
         let add_formal (t, n) p =
+    
+            (* TODO: Make this execute only if type is Shape*)
+            let shape_file = tmp_folder ^ string_of_int(Random.int 100000000) ^ ".off" in 
+            ignore (Hashtbl.add shape_map n shape_file);
+
             L.set_value_name n p;
             let local = L.build_alloca (ltype_of_typ t) n builder in
               ignore (L.build_store p local builder);
@@ -255,6 +265,22 @@ let translate (globals, functions) =
       	    let zero_const = L.const_int i32_t 0 in
             let str = L.build_in_bounds_gep string_head [| zero_const |] "transcall_str" builder in
             L.build_call system_func [| str |] "translatef" builder
+      | A.Call ("Save", [s; n]) ->
+      		(* Turn x into a string here - also, link file to resource folder *)
+            let shape_file = "~/Desktop/tetra.off" in 
+
+            let string_of_expr = function 
+                A.Id(s) -> s in
+            let transa_list = ["cp"; shape_file; (Hashtbl.find shape_map (string_of_expr(s)))] in  
+            let transcmd_str = String.concat " " transa_list in            
+
+        
+
+	        let string_head = expr builder (A.StrLit transcmd_str) in 
+      	    let zero_const = L.const_int i32_t 0 in
+            let str = L.build_in_bounds_gep string_head [| zero_const |] "transcall_str" builder in
+            L.build_call system_func [| str |] "savef" builder
+
 
       | A.Call ("Render", [s]) -> 
             let shape_file = "~/Desktop/tetra.off" in 
@@ -324,6 +350,13 @@ let translate (globals, functions) =
           let local = L.build_alloca (ltype_of_typ t) n builder in
             ignore (Hashtbl.add local_vars n local);
             ignore (Hashtbl.add type_map n t);
+            (* TODO: Maybe need to add to shape_map as well? *)
+ 
+            (* TODO: Make this execute only if type is Shape*)
+            let shape_file = tmp_folder ^ string_of_int(Random.int 100000000) ^ ".off" in 
+            ignore (Hashtbl.add shape_map n shape_file);
+
+
           match e with
             | A.Noexpr -> builder
             | _ -> let e' = expr builder e in
