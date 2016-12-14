@@ -91,6 +91,13 @@ let translate (globals, functions) =
     in
 
 
+    let add_shape_type ty na= 
+      match ty with 
+      A.Shape ->              
+        let shape_file = tmp_folder ^ string_of_int(Random.int 100000000) ^ ".off" in 
+        ignore (Hashtbl.add shape_map na shape_file);
+      | _ -> () in
+
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
     let dbl_format_str = L.build_global_stringptr "%f\n" "fmt" builder in
 
@@ -103,9 +110,7 @@ let translate (globals, functions) =
         ignore (Hashtbl.clear shape_map);
         let add_formal (t, n) p =
     
-            (* TODO: Make this execute only if type is Shape*)
-            let shape_file = tmp_folder ^ string_of_int(Random.int 100000000) ^ ".off" in 
-            ignore (Hashtbl.add shape_map n shape_file);
+            add_shape_type t n;             
 
             L.set_value_name n p;
             let local = L.build_alloca (ltype_of_typ t) n builder in
@@ -350,12 +355,8 @@ let translate (globals, functions) =
           let local = L.build_alloca (ltype_of_typ t) n builder in
             ignore (Hashtbl.add local_vars n local);
             ignore (Hashtbl.add type_map n t);
-            (* TODO: Maybe need to add to shape_map as well? *)
- 
-            (* TODO: Make this execute only if type is Shape*)
-            let shape_file = tmp_folder ^ string_of_int(Random.int 100000000) ^ ".off" in 
-            ignore (Hashtbl.add shape_map n shape_file);
 
+            add_shape_type t n;  
 
           match e with
             | A.Noexpr -> builder
