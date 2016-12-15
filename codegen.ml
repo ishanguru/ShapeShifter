@@ -150,7 +150,7 @@ let translate (globals, functions) =
       | A.Noexpr -> L.const_int i32_t 0
      
     (* Seems to be redefined later on? *) 
-    (*  | A.Id s -> L.build_load (lookup s) s builder *)
+     | A.Id s -> L.build_load (lookup s) s builder
 
       (* Shouldn't ever actually evaluate the primitives like this *)
    (*   | A.TetraPrim -> L.const_int i32_t 0
@@ -237,6 +237,9 @@ let translate (globals, functions) =
 	  (match op with
 	  	    A.Neg     -> L.build_neg
           | A.Not     -> L.build_not) e' "tmp" builder
+
+    | A.Assign (s, e) -> let e' = expr builder e in
+        ignore (L.build_store e' (lookup s) builder); e'
 
 (* It looks like Assign is never invoked; rather you have Local(t, n, e) *) 
 (* 
