@@ -87,6 +87,7 @@ let translate (globals, functions) =
       and cork_trans = "-translate" 
       and render_exec = "./graphics/display/sshiftdisplay"
       and tetra_file = "./graphics/.primitives/tetra.off"
+      and cube_file = "./graphics/.primitives/cube.off"
       and tmp_folder = "./.tmp/"
     in
 
@@ -147,9 +148,14 @@ let translate (globals, functions) =
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       
       | A.Noexpr -> L.const_int i32_t 0
-      
-      | A.Id s -> L.build_load (lookup s) s builder
-      
+     
+    (* Seems to be redefined later on? *) 
+    (*  | A.Id s -> L.build_load (lookup s) s builder *)
+
+      (* Shouldn't ever actually evaluate the primitives like this *)
+   (*   | A.TetraPrim -> L.const_int i32_t 0
+      | A.CubePrim -> L.const_int i32_t 0    
+  *)
       | A.Binop (e1, op, e2) ->
 	  let e1' = expr builder e1
 	  and e2' = expr builder e2 in
@@ -188,7 +194,7 @@ let translate (globals, functions) =
 		  		| A.Geq     -> L.build_fcmp L.Fcmp.Oge
 		  ) e1' e2' "tmp" builder
 
-		| A.Id id ->   
+		| A.Id id ->  
 		  (* We need to match with each type that ID can take, use StringMap for storing types *)
 		  let variable_type = lookup_type id in
 		  (
@@ -232,9 +238,27 @@ let translate (globals, functions) =
 	  	    A.Neg     -> L.build_neg
           | A.Not     -> L.build_not) e' "tmp" builder
 
-      | A.Assign (s, e) -> let e' = expr builder e in
-	                   ignore (L.build_store e' (lookup s) builder); e'
+(* It looks like Assign is never invoked; rather you have Local(t, n, e) *) 
+(* 
+      | A.Assign (s, e) -> 
+        (match e with
+          A.CubePrim -> 
 
+            let _ = print_string "cubething" in 
+            let cmd_list = ["cp"; cube_file; (Hashtbl.find shape_map s)] in
+            let cmd_str = String.concat " " cmd_list in 
+
+	        let string_head = expr builder (A.StrLit cmd_str) in 
+      	    let zero_const = L.const_int i32_t 0 in
+            let str = L.build_in_bounds_gep string_head [| zero_const |] "cubeconstr_str" builder in
+            L.build_call system_func [| str |] "cubeconstr" builder
+
+
+          | _ ->  
+            let _ = print_string "not cube thing" in 
+            let e' = expr builder e in
+	            ignore (L.build_store e' (lookup s) builder); e')
+*)
       | A.Call ("print", [e]) ->
             let print_strlit s =
                 let string_head = expr builder (s) in
@@ -262,8 +286,13 @@ let translate (globals, functions) =
 
       | A.Call ("Translate", [s; x; y; z]) ->
       		(* Turn x into a string here - also, link file to resource folder *)
-            let shape_file = "~/Desktop/tetra.off" in 
-            let transa_list = [cork_exec; cork_trans; shape_file; "0"; "1"; "0"] in  
+            let string_of_expr = function 
+              | A.Id(s) -> s 
+              | A.DblLit(s) -> string_of_float s in 
+            let transa_list = [cork_exec; cork_trans; 
+                               (Hashtbl.find shape_map (string_of_expr(s))); 
+                               string_of_expr(x); string_of_expr(y); 
+                               string_of_expr(z)] in
             let transcmd_str = String.concat " " transa_list in            
 
 	        let string_head = expr builder (A.StrLit transcmd_str) in 
@@ -272,24 +301,20 @@ let translate (globals, functions) =
             L.build_call system_func [| str |] "translatef" builder
       | A.Call ("Save", [s; n]) ->
       		(* Turn x into a string here - also, link file to resource folder *)
-            let shape_file = "~/Desktop/tetra.off" in 
-
             let string_of_expr = function 
-                A.Id(s) -> s in
-            let transa_list = ["cp"; shape_file; (Hashtbl.find shape_map (string_of_expr(s)))] in  
+              | A.Id(s) -> s 
+              | A.StrLit(s) -> s in
+            let transa_list = ["cp"; (Hashtbl.find shape_map (string_of_expr(s))); string_of_expr(n)] in  
             let transcmd_str = String.concat " " transa_list in            
-
-        
 
 	        let string_head = expr builder (A.StrLit transcmd_str) in 
       	    let zero_const = L.const_int i32_t 0 in
             let str = L.build_in_bounds_gep string_head [| zero_const |] "transcall_str" builder in
             L.build_call system_func [| str |] "savef" builder
-
-
       | A.Call ("Render", [s]) -> 
-            let shape_file = "~/Desktop/tetra.off" in 
-            let renda_list = [render_exec; shape_file] in
+            let string_of_expr = function
+                A.Id(s) -> s in
+            let renda_list = [render_exec; (Hashtbl.find shape_map (string_of_expr(s)))] in
             let rendcmd_str = String.concat " " renda_list in
             let string_head = expr builder (A.StrLit rendcmd_str) in
             let zero_const = L.const_int i32_t 0 in
@@ -359,6 +384,15 @@ let translate (globals, functions) =
             add_shape_type t n;  
 
           match e with
+            | A.CubePrim -> 
+                let cmd_list = ["cp"; cube_file; (Hashtbl.find shape_map n)] in
+                let cmd_str = String.concat " " cmd_list in 
+
+	            let string_head = expr builder (A.StrLit cmd_str) in 
+      	        let zero_const = L.const_int i32_t 0 in
+                let str = L.build_in_bounds_gep string_head [| zero_const |] "cubeconstr_str" builder in
+                L.build_call system_func [| str |] "cubeconstr" builder; 
+                builder
             | A.Noexpr -> builder
             | _ -> let e' = expr builder e in
                    ignore (L.build_store e' (lookup n) builder);

@@ -1,0 +1,12 @@
+
+int scene() {
+
+Shape s = CUBE; 
+
+Translate(s, 0.0, 1.0, 0.0); 
+
+Render(s); 
+
+Save(s, "./mycube.off"); 
+
+}
