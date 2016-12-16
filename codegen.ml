@@ -68,30 +68,55 @@ let translate (globals, functions) =
       let name = 
       	if fdecl.A.fname = "scene" then "main" else fdecl.A.fname
       and formal_types =
-	Array.of_list (List.map (fun (t,_) -> ltype_of_typ t) fdecl.A.formals)
+	    Array.of_list (List.map (fun (t,_) -> ltype_of_typ t) fdecl.A.formals)
       in let ftype = L.function_type (ltype_of_typ fdecl.A.typ) formal_types in
-      StringMap.add name (L.define_function name ftype the_module, fdecl) m in
-    List.fold_left function_decl StringMap.empty functions in
+    StringMap.add name (L.define_function name ftype the_module, fdecl) m in
+  List.fold_left function_decl StringMap.empty functions in
   
   (* Fill in the body of the given function *)
   let build_function_body fdecl =
     let name = 
-      	if fdecl.A.fname = "scene" then "main" else fdecl.A.fname in
+      if fdecl.A.fname = "scene" then "main" else fdecl.A.fname in
     let (the_function, _) = StringMap.find name function_decls in
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
-
     (* Declare the strings we need *)
-  
-    let cork_exec = "./graphics/cork/bin/cork" 
-      and cork_trans = "-translate" 
-      and render_exec = "./graphics/display/sshiftdisplay"
-      and tetra_file = "./graphics/.primitives/tetra.off"
-      and cube_file = "./graphics/.primitives/cube.off"
-      and tmp_folder = "./.tmp/"
+    (* Cork executable and commands *)
+    let get_cork_cmd func args = 
+      (
+      let cork_exec = "./graphics/cork/bin/cork" 
+      and render_exec = "./graphics/display/sshiftdisplay" in
+
+      let cork_cmd f = 
+        (match f with 
+          "Translate"         -> cork_exec ^ " -translate"
+          | "Reflect"         -> cork_exec ^ " -reflect" 
+          | "Rotate"          -> cork_exec ^ " -rotate" 
+          | "Scale"           -> cork_exec ^ " -scale" 
+          | "Union"           -> cork_exec ^ " -union"
+          | "Difference"      -> cork_exec ^ " -diff"
+          | "Intersect"       -> cork_exec ^ " -isct"
+          (* TODO: Add XOR *)
+          (* | "Xor"         -> cork_exec ^ " -xor" *)
+        )
+      in
+
+      (cork_cmd func) ^ args 
+    )
     in
 
+    let get_prim_file p = 
+      match p with 
+        A.ConePrim          -> "./graphics/.primitives/cone.off" 
+        | A.CubePrim        -> "./graphics/.primitives/cube.off"
+        | A.CylinderPrim    -> "./graphics/.primitives/cylinder.off"
+        | A.SpherePrim      -> "./graphics/.primitives/sphere.off"
+        | A.TetraPrim       -> "./graphics/.primitives/tetra.off"
+    in
+    
+    let tmp_folder = "./.tmp/" in
 
+    (* Create a temp file for each shape from random int; collisions not checked but unlikely yolo *)
     let add_shape_type ty na= 
       match ty with 
       A.Shape ->              
@@ -106,35 +131,45 @@ let translate (globals, functions) =
        declared variables.  Allocate each on the stack, initialize their
        value, if appropriate, and remember their values in the "locals" map *)
     let _ =
-        ignore (Hashtbl.clear local_vars);
-        ignore (Hashtbl.clear type_map);
-        ignore (Hashtbl.clear shape_map);
-        let add_formal (t, n) p =
-    
-            add_shape_type t n;             
-
-            L.set_value_name n p;
-            let local = L.build_alloca (ltype_of_typ t) n builder in
-              ignore (L.build_store p local builder);
-              ignore (Hashtbl.add local_vars n local);
+      ignore (Hashtbl.clear local_vars);
+      ignore (Hashtbl.clear type_map);
+      ignore (Hashtbl.clear shape_map);
+      let add_formal (t, n) p =
+        add_shape_type t n;             
+        L.set_value_name n p;
+        let local = L.build_alloca (ltype_of_typ t) n builder in
+          ignore (L.build_store p local builder);
+          ignore (Hashtbl.add local_vars n local);
         in
-        List.iter2 add_formal fdecl.A.formals (Array.to_list (L.params the_function))
+      List.iter2 add_formal fdecl.A.formals (Array.to_list (L.params the_function))
+    in
+
+    (* Add types as necessary *)
+    let string_of_expr = function 
+      | A.Id(s) -> s 
+      | A.DblLit(s) -> string_of_float s in 
+ 
+    let build_string s n expr = 
+	  let string_head = expr builder (A.StrLit s) in 
+      let zero_const = L.const_int i32_t 0 in
+      let str = L.build_in_bounds_gep string_head [| zero_const |] (n^"_str") builder in
+      L.build_call system_func [| str |] "translatef" builder
     in
 
     let lookup n =
-        try Hashtbl.find local_vars n
-        with Not_found -> StringMap.find n global_vars
+      try Hashtbl.find local_vars n
+      with Not_found -> StringMap.find n global_vars
     in
                    
     let _ =
-        let add_type (t, n) =
-            Hashtbl.add type_map n t
-        in
-        List.iter add_type fdecl.A.formals
+      let add_type (t, n) =
+        Hashtbl.add type_map n t
+      in
+      List.iter add_type fdecl.A.formals
     in
 
     let lookup_type n =
-        Hashtbl.find type_map n
+      Hashtbl.find type_map n
     in
     
     (* Construct code for an expression; return its value *)
@@ -149,143 +184,147 @@ let translate (globals, functions) =
       
       | A.Noexpr -> L.const_int i32_t 0
      
-    (* Seems to be redefined later on? *) 
-     | A.Id s -> L.build_load (lookup s) s builder
+      | A.Id s -> L.build_load (lookup s) s builder
 
-      (* Shouldn't ever actually evaluate the primitives like this *)
-   (*   | A.TetraPrim -> L.const_int i32_t 0
-      | A.CubePrim -> L.const_int i32_t 0    
-  *)
       | A.Binop (e1, op, e2) ->
-	  let e1' = expr builder e1
-	  and e2' = expr builder e2 in
+	    let e1' = expr builder e1
+	    and e2' = expr builder e2 in
 
-	  (match e1 with 
-
+	    (match e1 with 
 	  	| A.IntLit i -> 
 		  (match op with
-		    	A.Add     -> L.build_add
-		  		| A.Sub     -> L.build_sub
-		  		| A.Mult    -> L.build_mul
-	          	| A.Div     -> L.build_sdiv
-		  		| A.And     -> L.build_and
-		  		| A.Or      -> L.build_or
-		  		| A.Equal   -> L.build_icmp L.Icmp.Eq
-		  		| A.Neq     -> L.build_icmp L.Icmp.Ne
-		  		| A.Less    -> L.build_icmp L.Icmp.Slt
-		  		| A.Leq     -> L.build_icmp L.Icmp.Sle
-		  		| A.Greater -> L.build_icmp L.Icmp.Sgt
-		  		| A.Geq     -> L.build_icmp L.Icmp.Sge
+		    A.Add       -> L.build_add
+		    | A.Sub     -> L.build_sub
+		  	| A.Mult    -> L.build_mul
+	        | A.Div     -> L.build_sdiv
+		  	| A.And     -> L.build_and
+		  	| A.Or      -> L.build_or
+		  	| A.Equal   -> L.build_icmp L.Icmp.Eq
+		  	| A.Neq     -> L.build_icmp L.Icmp.Ne
+		  	| A.Less    -> L.build_icmp L.Icmp.Slt
+		  	| A.Leq     -> L.build_icmp L.Icmp.Sle
+		  	| A.Greater -> L.build_icmp L.Icmp.Sgt
+		  	| A.Geq     -> L.build_icmp L.Icmp.Sge
 		  ) e1' e2' "tmp" builder
 
 		| A.DblLit d -> 
 		  (match op with
-		    	A.Add     -> L.build_fadd
-		  		| A.Sub     -> L.build_fsub
-		  		| A.Mult    -> L.build_fmul
-	          	| A.Div     -> L.build_fdiv
-		  		| A.And     -> L.build_and
-		  		| A.Or      -> L.build_or
-		  		| A.Equal   -> L.build_fcmp L.Fcmp.Oeq
-		  		| A.Neq     -> L.build_fcmp L.Fcmp.One
-		  		| A.Less    -> L.build_fcmp L.Fcmp.Ult
-		  		| A.Leq     -> L.build_fcmp L.Fcmp.Ole
-		  		| A.Greater -> L.build_fcmp L.Fcmp.Ogt
-		  		| A.Geq     -> L.build_fcmp L.Fcmp.Oge
+		    A.Add       -> L.build_fadd
+		  	| A.Sub     -> L.build_fsub
+		  	| A.Mult    -> L.build_fmul
+	        | A.Div     -> L.build_fdiv
+		  	| A.And     -> L.build_and
+		  	| A.Or      -> L.build_or
+		  	| A.Equal   -> L.build_fcmp L.Fcmp.Oeq
+		  	| A.Neq     -> L.build_fcmp L.Fcmp.One
+		  	| A.Less    -> L.build_fcmp L.Fcmp.Ult
+		  	| A.Leq     -> L.build_fcmp L.Fcmp.Ole
+		  	| A.Greater -> L.build_fcmp L.Fcmp.Ogt
+		  	| A.Geq     -> L.build_fcmp L.Fcmp.Oge
 		  ) e1' e2' "tmp" builder
 
 		| A.Id id ->  
 		  (* We need to match with each type that ID can take, use StringMap for storing types *)
 		  let variable_type = lookup_type id in
 		  (
-		  	match variable_type with
-		  	
-		  	| A.Dbl ->  (match op with
-		    				A.Add     -> L.build_fadd
-		  					| A.Sub     -> L.build_fsub
-		  					| A.Mult    -> L.build_fmul
-				          	| A.Div     -> L.build_fdiv
-					  		| A.And     -> L.build_and
-					  		| A.Or      -> L.build_or
-					  		| A.Equal   -> L.build_fcmp L.Fcmp.Oeq
-					  		| A.Neq     -> L.build_fcmp L.Fcmp.One
-					  		| A.Less    -> L.build_fcmp L.Fcmp.Ult
-					  		| A.Leq     -> L.build_fcmp L.Fcmp.Ole
-					  		| A.Greater -> L.build_fcmp L.Fcmp.Ogt
-					  		| A.Geq     -> L.build_fcmp L.Fcmp.Oge
-					  	) e1' e2' "tmp" builder
-		  	| A.Int ->  (match op with
-					    	A.Add     -> L.build_add
-					  		| A.Sub     -> L.build_sub
-					  		| A.Mult    -> L.build_mul
-				          	| A.Div     -> L.build_sdiv
-					  		| A.And     -> L.build_and
-					  		| A.Or      -> L.build_or
-					  		| A.Equal   -> L.build_icmp L.Icmp.Eq
-					  		| A.Neq     -> L.build_icmp L.Icmp.Ne
-					  		| A.Less    -> L.build_icmp L.Icmp.Slt
-					  		| A.Leq     -> L.build_icmp L.Icmp.Sle
-					  		| A.Greater -> L.build_icmp L.Icmp.Sgt
-					  		| A.Geq     -> L.build_icmp L.Icmp.Sge
-					  	) e1' e2' "tmp" builder
-		  )
-			  
-	  )
+		  	match variable_type with	  	
+		  	| A.Dbl ->  
+              (match op with
+                A.Add       -> L.build_fadd
+		  		| A.Sub     -> L.build_fsub
+		  		| A.Mult    -> L.build_fmul
+				| A.Div     -> L.build_fdiv
+			    | A.And     -> L.build_and
+			    | A.Or      -> L.build_or
+				| A.Equal   -> L.build_fcmp L.Fcmp.Oeq
+			    | A.Neq     -> L.build_fcmp L.Fcmp.One
+			    | A.Less    -> L.build_fcmp L.Fcmp.Ult
+			    | A.Leq     -> L.build_fcmp L.Fcmp.Ole
+			    | A.Greater -> L.build_fcmp L.Fcmp.Ogt
+			    | A.Geq     -> L.build_fcmp L.Fcmp.Oge
+			  ) e1' e2' "tmp" builder
+		  	| A.Int ->  
+              (match op with
+			    A.Add       -> L.build_add
+		    	| A.Sub     -> L.build_sub
+			    | A.Mult    -> L.build_mul
+		    	| A.Div     -> L.build_sdiv
+		    	| A.And     -> L.build_and
+	     		| A.Or      -> L.build_or
+		  		| A.Equal   -> L.build_icmp L.Icmp.Eq
+		    	| A.Neq     -> L.build_icmp L.Icmp.Ne
+				| A.Less    -> L.build_icmp L.Icmp.Slt
+		  		| A.Leq     -> L.build_icmp L.Icmp.Sle
+		  		| A.Greater -> L.build_icmp L.Icmp.Sgt
+		  		| A.Geq     -> L.build_icmp L.Icmp.Sge
+		      ) e1' e2' "tmp" builder
+		   ) 
+	    )
       
       | A.Unop(op, e) ->
-	  let e' = expr builder e in
-	  (match op with
-	  	    A.Neg     -> L.build_neg
+	    let e' = expr builder e in
+	    (match op with
+	  	  A.Neg       -> L.build_neg
           | A.Not     -> L.build_not) e' "tmp" builder
-
-    | A.Assign (s, e) -> let e' = expr builder e in
-        ignore (L.build_store e' (lookup s) builder); e'
-
-(* It looks like Assign is never invoked; rather you have Local(t, n, e) *) 
-(* 
-      | A.Assign (s, e) -> 
-        (match e with
-          A.CubePrim -> 
-
-            let _ = print_string "cubething" in 
-            let cmd_list = ["cp"; cube_file; (Hashtbl.find shape_map s)] in
-            let cmd_str = String.concat " " cmd_list in 
-
-	        let string_head = expr builder (A.StrLit cmd_str) in 
-      	    let zero_const = L.const_int i32_t 0 in
-            let str = L.build_in_bounds_gep string_head [| zero_const |] "cubeconstr_str" builder in
-            L.build_call system_func [| str |] "cubeconstr" builder
-
-
-          | _ ->  
-            let _ = print_string "not cube thing" in 
-            let e' = expr builder e in
-	            ignore (L.build_store e' (lookup s) builder); e')
-*)
-      | A.Call ("print", [e]) ->
+          | A.Assign (s, e) -> let e' = expr builder e in
+            ignore (L.build_store e' (lookup s) builder); e'
+          | A.Call ("print", [e]) ->
             let print_strlit s =
-                let string_head = expr builder (s) in
-                let zero_const = L.const_int i32_t 0 in
-                let str = L.build_in_bounds_gep string_head [| zero_const |] "str_printf" builder in
-                L.build_call printf_func [| str |] "str_printf" builder in  
+            let string_head = expr builder (s) in
+            let zero_const = L.const_int i32_t 0 in
+            let str = L.build_in_bounds_gep string_head [| zero_const |] "str_printf" builder in
+            L.build_call printf_func [| str |] "str_printf" builder in  
 
-      	(match List.hd[e] with 
-
-      		| A.StrLit s ->
+      	    (match List.hd[e] with 
+      		  | A.StrLit s ->
                 print_strlit (List.hd[e])
-      		| A.DblLit d -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
-      		| A.IntLit i -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
-      		| A.Id id -> 
-      				let variable_type = lookup_type id in
-      				(
-      					match variable_type with 
-      					| A.Dbl -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
-      					| A.Int -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
-                        | A.String -> print_strlit (List.hd[e])         
-                            	
-                    )
+      		  | A.DblLit d     -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
+      		  | A.IntLit i     -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
+      		  | A.Id id        -> 
+      		    let variable_type = lookup_type id in
+      		    (
+      		      match variable_type with 
+      			    | A.Dbl    -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
+      				| A.Int    -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
+                    | A.String -> print_strlit (List.hd[e])         
+                )
+	        )
+      | A.Call ("Translate", [s; x; y; z]) ->
+       
+     
+        let fuck_this = "translate" in
+        let fuck_that = "yolo" in
+        let s = get_cork_cmd(fuck_this, fuck_that) in 
+        s; 
+        let trans_cmd = get_cork_cmd(fuck_this, fuck_that) in 
+        trans_cmd ^ " ";
 
-	    )
+(*
+        let trans_cmd = get_cork_cmd("Translate", (String.concat " " 
+                               [(Hashtbl.find shape_map (string_of_expr(s))); string_of_expr(x); string_of_expr(y); 
+                                string_of_expr(z)])) 
+        in 
+        trans_cmd ^ " "; 
+*)
+    (*in
+
+        build_string(trans_cmd, "translatef", expr); *)
+(*    
+
+            let transa_list = [cork_exec; cork_trans; 
+                               (Hashtbl.find shape_map (string_of_expr(s))); 
+                               string_of_expr(x); string_of_expr(y); 
+                               string_of_expr(z)] in
+            let transcmd_str = String.concat " " transa_list in            
+*)
+(*
+	        let string_head = expr builder (A.StrLit transcmd_str) in 
+      	    let zero_const = L.const_int i32_t 0 in
+            let str = L.build_in_bounds_gep string_head [| zero_const |] "transcall_str" builder in
+            L.build_call system_func [| str |] "translatef" builder
+ *)
+
+      (* 
 
       | A.Call ("Translate", [s; x; y; z]) ->
       		(* Turn x into a string here - also, link file to resource folder *)
@@ -324,20 +363,22 @@ let translate (globals, functions) =
             let str = L.build_in_bounds_gep string_head [| zero_const |] "rendcall_str" builder in
             L.build_call system_func [| str |] "renderf" builder
 
+ *)
+
       | A.Call (f, act) ->
-         let (fdef, fdecl) = StringMap.find f function_decls in
-	 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
-	 	 let result = (match fdecl.A.typ with A.Void -> ""
+        let (fdef, fdecl) = StringMap.find f function_decls in
+	 	let actuals = List.rev (List.map (expr builder) (List.rev act)) in
+	 	let result = (match fdecl.A.typ with A.Void -> ""
                                             | _ -> f ^ "_result") in
-         L.build_call fdef (Array.of_list actuals) result builder
+        L.build_call fdef (Array.of_list actuals) result builder
     in
 
     (* Invoke "f builder" if the current block doesn't already
        have a terminal (e.g., a branch). *)
     let add_terminal builder f =
       match L.block_terminator (L.insertion_block builder) with
-	Some _ -> ()
-      | None -> ignore (f builder) in
+	    Some _ -> ()
+        | None -> ignore (f builder) in
 	
     (* Build the code for the given statement; return the builder for
        the statement's successor *)
@@ -380,26 +421,27 @@ let translate (globals, functions) =
       | A.For (e1, e2, e3, body) -> stmt builder
 	    ( A.Block [A.Expr e1 ; A.While (e2, A.Block [body ; A.Expr e3]) ] )
       | A.Local (t, n, e) -> 
-          let local = L.build_alloca (ltype_of_typ t) n builder in
-            ignore (Hashtbl.add local_vars n local);
-            ignore (Hashtbl.add type_map n t);
+        let local = L.build_alloca (ltype_of_typ t) n builder in
+          ignore (Hashtbl.add local_vars n local);
+          ignore (Hashtbl.add type_map n t);
 
-            add_shape_type t n;  
+          add_shape_type t n;  
 
           match e with
             | A.CubePrim -> 
-                let cmd_list = ["cp"; cube_file; (Hashtbl.find shape_map n)] in
-                let cmd_str = String.concat " " cmd_list in 
+              let cmd_list = ["cp"; cube_file; (Hashtbl.find shape_map n)] in
+              let cmd_str = String.concat " " cmd_list in 
 
-	            let string_head = expr builder (A.StrLit cmd_str) in 
-      	        let zero_const = L.const_int i32_t 0 in
-                let str = L.build_in_bounds_gep string_head [| zero_const |] "cubeconstr_str" builder in
-                L.build_call system_func [| str |] "cubeconstr" builder; 
-                builder
+	          let string_head = expr builder (A.StrLit cmd_str) in 
+      	      let zero_const = L.const_int i32_t 0 in
+              let str = L.build_in_bounds_gep string_head [| zero_const |] "cubeconstr_str" builder in
+              L.build_call system_func [| str |] "cubeconstr" builder; 
+              builder
             | A.Noexpr -> builder
-            | _ -> let e' = expr builder e in
-                   ignore (L.build_store e' (lookup n) builder);
-                   builder
+            | _ -> 
+              let e' = expr builder e in
+              ignore (L.build_store e' (lookup n) builder);
+              builder
     in
 
     (* Build the code for each statement in the function *)
