@@ -82,8 +82,7 @@ let translate (globals, functions) =
 
     (* Declare the strings we need *)
     (* Cork executable and commands *)
-    let get_cork_cmd func args = 
-      (
+    let get_cork_cmd func args =  
       let cork_exec = "./graphics/cork/bin/cork" 
       and render_exec = "./graphics/display/sshiftdisplay" in
 
@@ -96,13 +95,14 @@ let translate (globals, functions) =
           | "Union"           -> cork_exec ^ " -union"
           | "Difference"      -> cork_exec ^ " -diff"
           | "Intersect"       -> cork_exec ^ " -isct"
+          | "Save"            -> "cp"
+          | "Render"          -> render_exec
           (* TODO: Add XOR *)
           (* | "Xor"         -> cork_exec ^ " -xor" *)
         )
       in
-
-      (cork_cmd func) ^ args 
-    )
+      (cork_cmd func) ^ " " ^ args
+    
     in
 
     let get_prim_file p = 
@@ -147,7 +147,8 @@ let translate (globals, functions) =
     (* Add types as necessary *)
     let string_of_expr = function 
       | A.Id(s) -> s 
-      | A.DblLit(s) -> string_of_float s in 
+      | A.DblLit(s) -> string_of_float s
+      | A.StrLit(s) -> s in
  
     let build_string s n expr = 
 	  let string_head = expr builder (A.StrLit s) in 
@@ -289,50 +290,22 @@ let translate (globals, functions) =
                     | A.String -> print_strlit (List.hd[e])         
                 )
 	        )
-(*
-      | A.Call ("Translate", [s; x; y; z]) ->
-        let trans_cmd = get_cork_cmd("Translate", (String.concat " " 
-                               [(Hashtbl.find shape_map (string_of_expr(s))); string_of_expr(x); string_of_expr(y); 
-                                string_of_expr(z)])) 
-        in 
-        build_string(trans_cmd, "translatef", expr); *)
-      | A.Call ("Translate", [s; x; y; z]) ->
-      		(* Turn x into a string here - also, link file to resource folder *)
-            let string_of_expr = function 
-              | A.Id(s) -> s 
-              | A.DblLit(s) -> string_of_float s in 
-            let transa_list = ["./graphics/cork/bin/cork -translate"; 
-                               (Hashtbl.find shape_map (string_of_expr(s))); 
-                               string_of_expr(x); string_of_expr(y); 
-                               string_of_expr(z)] in
-            let transcmd_str = String.concat " " transa_list in            
 
-	        let string_head = expr builder (A.StrLit transcmd_str) in 
-      	    let zero_const = L.const_int i32_t 0 in
-            let str = L.build_in_bounds_gep string_head [| zero_const |] "transcall_str" builder in
-            L.build_call system_func [| str |] "translatef" builder
-      | A.Call ("Save", [s; n]) ->
-      		(* Turn x into a string here - also, link file to resource folder *)
-            let string_of_expr = function 
-              | A.Id(s) -> s 
-              | A.StrLit(s) -> s in
-            let transa_list = ["cp"; (Hashtbl.find shape_map (string_of_expr(s))); string_of_expr(n)] in  
-            let transcmd_str = String.concat " " transa_list in            
-
-	        let string_head = expr builder (A.StrLit transcmd_str) in 
-      	    let zero_const = L.const_int i32_t 0 in
-            let str = L.build_in_bounds_gep string_head [| zero_const |] "transcall_str" builder in
-            L.build_call system_func [| str |] "savef" builder
+      | A.Call ("Translate", [s; x; y; z]) ->
+        let trans_cmd = get_cork_cmd "Translate" (String.concat " " 
+                            [(Hashtbl.find shape_map (string_of_expr(s))); 
+                            string_of_expr(x); string_of_expr(y); 
+                            string_of_expr(z)]) in
+        build_string trans_cmd "translatef" expr;
+      | A.Call ("Save", [s; n]) -> 
+        let save_cmd = get_cork_cmd "Save" (String.concat " " 
+                            [(Hashtbl.find shape_map (string_of_expr(s)));  
+                            string_of_expr(n)]) in  
+        build_string save_cmd "savef" expr;  
       | A.Call ("Render", [s]) -> 
-            let string_of_expr = function
-                A.Id(s) -> s in
-            let renda_list = ["./graphics/display/sshiftdisplay"; (Hashtbl.find shape_map (string_of_expr(s)))] in
-            let rendcmd_str = String.concat " " renda_list in
-            let string_head = expr builder (A.StrLit rendcmd_str) in
-            let zero_const = L.const_int i32_t 0 in
-            let str = L.build_in_bounds_gep string_head [| zero_const |] "rendcall_str" builder in
-            L.build_call system_func [| str |] "renderf" builder
-
+        let rend_cmd = get_cork_cmd "Render" (Hashtbl.find shape_map (string_of_expr(s))) in
+        build_string rend_cmd "rendf" expr; 
+ 
       | A.Call (f, act) ->
         let (fdef, fdecl) = StringMap.find f function_decls in
 	 	let actuals = List.rev (List.map (expr builder) (List.rev act)) in
