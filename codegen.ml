@@ -289,49 +289,19 @@ let translate (globals, functions) =
                     | A.String -> print_strlit (List.hd[e])         
                 )
 	        )
-      | A.Call ("Translate", [s; x; y; z]) ->
-       
-     
-        let fuck_this = "translate" in
-        let fuck_that = "yolo" in
-        let s = get_cork_cmd(fuck_this, fuck_that) in 
-        s; 
-        let trans_cmd = get_cork_cmd(fuck_this, fuck_that) in 
-        trans_cmd ^ " ";
-
 (*
+      | A.Call ("Translate", [s; x; y; z]) ->
         let trans_cmd = get_cork_cmd("Translate", (String.concat " " 
                                [(Hashtbl.find shape_map (string_of_expr(s))); string_of_expr(x); string_of_expr(y); 
                                 string_of_expr(z)])) 
         in 
-        trans_cmd ^ " "; 
-*)
-    (*in
-
         build_string(trans_cmd, "translatef", expr); *)
-(*    
-
-            let transa_list = [cork_exec; cork_trans; 
-                               (Hashtbl.find shape_map (string_of_expr(s))); 
-                               string_of_expr(x); string_of_expr(y); 
-                               string_of_expr(z)] in
-            let transcmd_str = String.concat " " transa_list in            
-*)
-(*
-	        let string_head = expr builder (A.StrLit transcmd_str) in 
-      	    let zero_const = L.const_int i32_t 0 in
-            let str = L.build_in_bounds_gep string_head [| zero_const |] "transcall_str" builder in
-            L.build_call system_func [| str |] "translatef" builder
- *)
-
-      (* 
-
       | A.Call ("Translate", [s; x; y; z]) ->
       		(* Turn x into a string here - also, link file to resource folder *)
             let string_of_expr = function 
               | A.Id(s) -> s 
               | A.DblLit(s) -> string_of_float s in 
-            let transa_list = [cork_exec; cork_trans; 
+            let transa_list = ["./graphics/cork/bin/cork -translate"; 
                                (Hashtbl.find shape_map (string_of_expr(s))); 
                                string_of_expr(x); string_of_expr(y); 
                                string_of_expr(z)] in
@@ -356,14 +326,12 @@ let translate (globals, functions) =
       | A.Call ("Render", [s]) -> 
             let string_of_expr = function
                 A.Id(s) -> s in
-            let renda_list = [render_exec; (Hashtbl.find shape_map (string_of_expr(s)))] in
+            let renda_list = ["./graphics/display/sshiftdisplay"; (Hashtbl.find shape_map (string_of_expr(s)))] in
             let rendcmd_str = String.concat " " renda_list in
             let string_head = expr builder (A.StrLit rendcmd_str) in
             let zero_const = L.const_int i32_t 0 in
             let str = L.build_in_bounds_gep string_head [| zero_const |] "rendcall_str" builder in
             L.build_call system_func [| str |] "renderf" builder
-
- *)
 
       | A.Call (f, act) ->
         let (fdef, fdecl) = StringMap.find f function_decls in
@@ -429,6 +397,7 @@ let translate (globals, functions) =
 
           match e with
             | A.CubePrim -> 
+              let cube_file = "./graphics/.primitives/cube.off" in
               let cmd_list = ["cp"; cube_file; (Hashtbl.find shape_map n)] in
               let cmd_str = String.concat " " cmd_list in 
 
