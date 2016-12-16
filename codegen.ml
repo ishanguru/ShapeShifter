@@ -146,15 +146,21 @@ let translate (globals, functions) =
 
     (* Add types as necessary *)
     let string_of_expr = function 
-      | A.Id(s) -> s 
-      | A.DblLit(s) -> string_of_float s
-      | A.StrLit(s) -> s in
+      | A.Id(s)         -> s 
+      | A.DblLit(s)     -> string_of_float s
+      | A.StrLit(s)     -> s
+      | A.ConePrim      -> "coneprim" 
+      | A.CubePrim      -> "cubeprim"
+      | A.CylinderPrim  -> "cylinderprim"
+      | A.SpherePrim    -> "sphereprim"
+      | A.TetraPrim     -> "tetraprim"
+    in
  
     let build_string s n expr = 
 	  let string_head = expr builder (A.StrLit s) in 
       let zero_const = L.const_int i32_t 0 in
       let str = L.build_in_bounds_gep string_head [| zero_const |] (n^"_str") builder in
-      L.build_call system_func [| str |] "translatef" builder
+      L.build_call system_func [| str |] n builder
     in
 
     let lookup n =
@@ -345,14 +351,29 @@ let translate (globals, functions) =
           ignore (Hashtbl.add type_map n t);
 
           add_shape_type t n;  
-
-          match e with
-            | A.CubePrim ->
-              let cube_cmd = get_cork_cmd "Save" (String.concat " "
-                            [(get_prim_file A.CubePrim); 
+            
+          let make_prim_cmd p n =
+            ( 
+            let prim_cmd = get_cork_cmd "Save" (String.concat " "
+                            [(get_prim_file p); 
                             (Hashtbl.find shape_map n)]) in
-              build_string cube_cmd "cubeconstrf" expr;
+              build_string prim_cmd ((string_of_expr p )^"f") expr;
               builder 
+            )
+          in   
+ 
+          match e with
+            | A.ConePrim        ->
+              make_prim_cmd A.ConePrim n
+            | A.CubePrim        ->
+              make_prim_cmd A.CubePrim n
+            | A.CylinderPrim    -> 
+              make_prim_cmd A.CylinderPrim n
+            | A.SpherePrim      ->
+              make_prim_cmd A.SpherePrim n
+            | A.TetraPrim       -> 
+              make_prim_cmd A.TetraPrim n
+ 
             | A.Noexpr -> builder
             | _ -> 
               let e' = expr builder e in
