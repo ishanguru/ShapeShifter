@@ -172,6 +172,40 @@ let translate (globals, functions) =
     let lookup_type n =
       Hashtbl.find type_map n
     in
+
+    let integer_ops op = 
+        (match op with
+            A.Add       -> L.build_add
+            | A.Sub     -> L.build_sub
+            | A.Mult    -> L.build_mul
+            | A.Div     -> L.build_sdiv
+            | A.And     -> L.build_and
+            | A.Or      -> L.build_or
+            | A.Equal   -> L.build_icmp L.Icmp.Eq
+            | A.Neq     -> L.build_icmp L.Icmp.Ne
+            | A.Less    -> L.build_icmp L.Icmp.Slt
+            | A.Leq     -> L.build_icmp L.Icmp.Sle
+            | A.Greater -> L.build_icmp L.Icmp.Sgt
+            | A.Geq     -> L.build_icmp L.Icmp.Sge
+        )
+    in
+
+    let double_ops op = 
+        (match op with
+            A.Add       -> L.build_fadd
+            | A.Sub     -> L.build_fsub
+            | A.Mult    -> L.build_fmul
+            | A.Div     -> L.build_fdiv
+            | A.And     -> L.build_and
+            | A.Or      -> L.build_or
+            | A.Equal   -> L.build_fcmp L.Fcmp.Oeq
+            | A.Neq     -> L.build_fcmp L.Fcmp.One
+            | A.Less    -> L.build_fcmp L.Fcmp.Ult
+            | A.Leq     -> L.build_fcmp L.Fcmp.Ole
+            | A.Greater -> L.build_fcmp L.Fcmp.Ogt
+            | A.Geq     -> L.build_fcmp L.Fcmp.Oge
+        )
+    in
     
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
@@ -179,8 +213,8 @@ let translate (globals, functions) =
       
       | A.StrLit s -> L.build_global_stringptr s "" builder
 	  
-	  | A.IntLit i -> L.const_int i32_t i
-      
+	    | A.IntLit i -> L.const_int i32_t i
+        
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       
       | A.Noexpr -> L.const_int i32_t 0
@@ -192,74 +226,18 @@ let translate (globals, functions) =
 	    and e2' = expr builder e2 in
 
 	    (match e1 with 
-	  	| A.IntLit i -> 
-		  (match op with
-		    A.Add       -> L.build_add
-		    | A.Sub     -> L.build_sub
-		  	| A.Mult    -> L.build_mul
-	        | A.Div     -> L.build_sdiv
-		  	| A.And     -> L.build_and
-		  	| A.Or      -> L.build_or
-		  	| A.Equal   -> L.build_icmp L.Icmp.Eq
-		  	| A.Neq     -> L.build_icmp L.Icmp.Ne
-		  	| A.Less    -> L.build_icmp L.Icmp.Slt
-		  	| A.Leq     -> L.build_icmp L.Icmp.Sle
-		  	| A.Greater -> L.build_icmp L.Icmp.Sgt
-		  	| A.Geq     -> L.build_icmp L.Icmp.Sge
-		  ) e1' e2' "tmp" builder
+    	  	| A.IntLit i -> (integer_ops op) e1' e2' "tmp" builder
 
-		| A.DblLit d -> 
-		  (match op with
-		    A.Add       -> L.build_fadd
-		  	| A.Sub     -> L.build_fsub
-		  	| A.Mult    -> L.build_fmul
-	        | A.Div     -> L.build_fdiv
-		  	| A.And     -> L.build_and
-		  	| A.Or      -> L.build_or
-		  	| A.Equal   -> L.build_fcmp L.Fcmp.Oeq
-		  	| A.Neq     -> L.build_fcmp L.Fcmp.One
-		  	| A.Less    -> L.build_fcmp L.Fcmp.Ult
-		  	| A.Leq     -> L.build_fcmp L.Fcmp.Ole
-		  	| A.Greater -> L.build_fcmp L.Fcmp.Ogt
-		  	| A.Geq     -> L.build_fcmp L.Fcmp.Oge
-		  ) e1' e2' "tmp" builder
+    		  | A.DblLit d -> (double_ops op) e1' e2' "tmp" builder
 
-		| A.Id id ->  
-		  (* We need to match with each type that ID can take, use StringMap for storing types *)
-		  let variable_type = lookup_type id in
-		  (
-		  	match variable_type with	  	
-		  	| A.Dbl ->  
-              (match op with
-                A.Add       -> L.build_fadd
-		  		| A.Sub     -> L.build_fsub
-		  		| A.Mult    -> L.build_fmul
-				| A.Div     -> L.build_fdiv
-			    | A.And     -> L.build_and
-			    | A.Or      -> L.build_or
-				| A.Equal   -> L.build_fcmp L.Fcmp.Oeq
-			    | A.Neq     -> L.build_fcmp L.Fcmp.One
-			    | A.Less    -> L.build_fcmp L.Fcmp.Ult
-			    | A.Leq     -> L.build_fcmp L.Fcmp.Ole
-			    | A.Greater -> L.build_fcmp L.Fcmp.Ogt
-			    | A.Geq     -> L.build_fcmp L.Fcmp.Oge
-			  ) e1' e2' "tmp" builder
-		  	| A.Int ->  
-              (match op with
-			    A.Add       -> L.build_add
-		    	| A.Sub     -> L.build_sub
-			    | A.Mult    -> L.build_mul
-		    	| A.Div     -> L.build_sdiv
-		    	| A.And     -> L.build_and
-	     		| A.Or      -> L.build_or
-		  		| A.Equal   -> L.build_icmp L.Icmp.Eq
-		    	| A.Neq     -> L.build_icmp L.Icmp.Ne
-				| A.Less    -> L.build_icmp L.Icmp.Slt
-		  		| A.Leq     -> L.build_icmp L.Icmp.Sle
-		  		| A.Greater -> L.build_icmp L.Icmp.Sgt
-		  		| A.Geq     -> L.build_icmp L.Icmp.Sge
-		      ) e1' e2' "tmp" builder
-		   ) 
+    		  | A.Id id ->  
+    		  (* We need to match with each type that ID can take, use StringMap for storing types *)
+    		  let variable_type = lookup_type id in
+    		  (
+    		  	match variable_type with	  	
+    		  	| A.Dbl ->  (double_ops op) e1' e2' "tmp" builder
+    		  	| A.Int ->  (integer_ops op) e1' e2' "tmp" builder
+    		  ) 
 	    )
       
       | A.Unop(op, e) ->
