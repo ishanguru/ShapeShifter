@@ -1,0 +1,12 @@
+
+int scene() {
+
+Shape con = CONE; 
+Shape cub = CUBE; 
+Shape cyl = CYLINDER; 
+Shape sph = SPHERE; 
+Shape tet = TETRA; 
+
+}
+
+
