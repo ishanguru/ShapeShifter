@@ -21,8 +21,8 @@ let _ = Random.self_init()
 
 let local_vars:(string, L.llvalue) Hashtbl.t = Hashtbl.create 50
 let type_map:(string, A.typ) Hashtbl.t = Hashtbl.create 50
-let shape_map:(string, string) Hashtbl.t = Hashtbl.create 50
 (* Store the underlying filenames for each shape *)
+let shape_map:(string, string) Hashtbl.t = Hashtbl.create 50
 
 let translate (globals, functions) =
   let context = L.global_context () in
@@ -43,7 +43,7 @@ let translate (globals, functions) =
     | A.Void -> void_t
     | A.String -> i8_pt 
     | A.Dbl -> double_t
-    | A.Shape -> i8_pt (*Make Shape an int just to be able to test translate *)  in
+    | A.Shape -> i32_t (*Make Shape an int just to be able to test translate *)  in
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars =
@@ -97,8 +97,7 @@ let translate (globals, functions) =
           | "Intersect"       -> cork_exec ^ " -isct"
           | "Save"            -> "cp"
           | "Render"          -> render_exec
-          (* TODO: Add XOR *)
-          (* | "Xor"         -> cork_exec ^ " -xor" *)
+          | "Xor"         -> cork_exec ^ " -xor" 
         )
       in
       (cork_cmd func) ^ " " ^ args
@@ -148,6 +147,7 @@ let translate (globals, functions) =
     let string_of_expr = function 
       | A.Id(s)         -> s 
       | A.DblLit(s)     -> string_of_float s
+      | A.IntLit(s)     -> string_of_int s
       | A.StrLit(s)     -> s
       | A.ConePrim      -> "coneprim" 
       | A.CubePrim      -> "cubeprim"
@@ -180,37 +180,37 @@ let translate (globals, functions) =
     in
 
     let integer_ops op = 
-        (match op with
-            A.Add       -> L.build_add
-            | A.Sub     -> L.build_sub
-            | A.Mult    -> L.build_mul
-            | A.Div     -> L.build_sdiv
-            | A.And     -> L.build_and
-            | A.Or      -> L.build_or
-            | A.Equal   -> L.build_icmp L.Icmp.Eq
-            | A.Neq     -> L.build_icmp L.Icmp.Ne
-            | A.Less    -> L.build_icmp L.Icmp.Slt
-            | A.Leq     -> L.build_icmp L.Icmp.Sle
-            | A.Greater -> L.build_icmp L.Icmp.Sgt
-            | A.Geq     -> L.build_icmp L.Icmp.Sge
-        )
+      (match op with
+        A.Add       -> L.build_add
+        | A.Sub     -> L.build_sub
+        | A.Mult    -> L.build_mul
+        | A.Div     -> L.build_sdiv
+        | A.And     -> L.build_and
+        | A.Or      -> L.build_or
+        | A.Equal   -> L.build_icmp L.Icmp.Eq
+        | A.Neq     -> L.build_icmp L.Icmp.Ne
+        | A.Less    -> L.build_icmp L.Icmp.Slt
+        | A.Leq     -> L.build_icmp L.Icmp.Sle
+        | A.Greater -> L.build_icmp L.Icmp.Sgt
+        | A.Geq     -> L.build_icmp L.Icmp.Sge
+      )
     in
 
     let double_ops op = 
-        (match op with
-            A.Add       -> L.build_fadd
-            | A.Sub     -> L.build_fsub
-            | A.Mult    -> L.build_fmul
-            | A.Div     -> L.build_fdiv
-            | A.And     -> L.build_and
-            | A.Or      -> L.build_or
-            | A.Equal   -> L.build_fcmp L.Fcmp.Oeq
-            | A.Neq     -> L.build_fcmp L.Fcmp.One
-            | A.Less    -> L.build_fcmp L.Fcmp.Ult
-            | A.Leq     -> L.build_fcmp L.Fcmp.Ole
-            | A.Greater -> L.build_fcmp L.Fcmp.Ogt
-            | A.Geq     -> L.build_fcmp L.Fcmp.Oge
-        )
+      (match op with
+        A.Add       -> L.build_fadd
+        | A.Sub     -> L.build_fsub
+        | A.Mult    -> L.build_fmul
+        | A.Div     -> L.build_fdiv
+        | A.And     -> L.build_and
+        | A.Or      -> L.build_or
+        | A.Equal   -> L.build_fcmp L.Fcmp.Oeq
+        | A.Neq     -> L.build_fcmp L.Fcmp.One
+        | A.Less    -> L.build_fcmp L.Fcmp.Ult
+        | A.Leq     -> L.build_fcmp L.Fcmp.Ole
+        | A.Greater -> L.build_fcmp L.Fcmp.Ogt
+        | A.Geq     -> L.build_fcmp L.Fcmp.Oge
+      )
     in
     
     (* Construct code for an expression; return its value *)
@@ -219,7 +219,7 @@ let translate (globals, functions) =
       
       | A.StrLit s -> L.build_global_stringptr s "" builder
 	  
-	    | A.IntLit i -> L.const_int i32_t i
+	  | A.IntLit i -> L.const_int i32_t i
         
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       
@@ -232,20 +232,18 @@ let translate (globals, functions) =
 	    and e2' = expr builder e2 in
 
 	    (match e1 with 
-    	  	| A.IntLit i -> (integer_ops op) e1' e2' "tmp" builder
-
-    		  | A.DblLit d -> (double_ops op) e1' e2' "tmp" builder
-
-    		  | A.Id id ->  
-    		  (* We need to match with each type that ID can take, use StringMap for storing types *)
-    		  let variable_type = lookup_type id in
-    		  (
-    		  	match variable_type with	  	
-    		  	| A.Dbl ->  (double_ops op) e1' e2' "tmp" builder
-    		  	| A.Int ->  (integer_ops op) e1' e2' "tmp" builder
-    		  ) 
+    	  | A.IntLit i -> (integer_ops op) e1' e2' "tmp" builder
+          | A.DblLit d -> (double_ops op) e1' e2' "tmp" builder
+          | A.Id id ->  
+          (* We need to match with each type that ID can take, use StringMap for storing types *)
+          let variable_type = lookup_type id in
+          (
+            match variable_type with	  	
+            | A.Dbl ->  (double_ops op) e1' e2' "tmp" builder
+            | A.Int ->  (integer_ops op) e1' e2' "tmp" builder
+          ) 
 	    )
-      
+  
       | A.Unop(op, e) ->
 	    let e' = expr builder e in
 	    (match op with
@@ -274,18 +272,64 @@ let translate (globals, functions) =
                     | A.String -> print_strlit (List.hd[e])         
                 )
 	        )
-
+    
+      (* Transformation calls *)
+      | A.Call ("Reflect", [s; a; b; c]) -> 
+        let refle_cmd = get_cork_cmd "Reflect" (String.concat " " 
+                            [(Hashtbl.find shape_map (string_of_expr(s))); 
+                            string_of_expr(a); string_of_expr(b); 
+                            string_of_expr(c)]) in
+        build_string refle_cmd "reflf" expr;
+      
+      | A.Call ("Rotate", [s; x; y; z]) -> 
+        let rotat_cmd = get_cork_cmd "Rotate" (String.concat " " 
+                            [(Hashtbl.find shape_map (string_of_expr(s))); 
+                            string_of_expr(x); string_of_expr(y); 
+                            string_of_expr(z)]) in
+        build_string rotat_cmd "rotatef" expr;
+      
+      | A.Call ("Scale", [s; x; y; z]) -> 
+        let scale_cmd = get_cork_cmd "Scale" (String.concat " " 
+                            [(Hashtbl.find shape_map (string_of_expr(s))); 
+                            string_of_expr(x); string_of_expr(y); 
+                            string_of_expr(z)]) in
+        build_string scale_cmd "scalef" expr;
+      
       | A.Call ("Translate", [s; x; y; z]) ->
         let trans_cmd = get_cork_cmd "Translate" (String.concat " " 
                             [(Hashtbl.find shape_map (string_of_expr(s))); 
                             string_of_expr(x); string_of_expr(y); 
                             string_of_expr(z)]) in
         build_string trans_cmd "translatef" expr;
+      
+      (* Boolean shape operations *)
+      | A.Call ("Union", [s1; s2]) -> 
+        let union_cmd = get_cork_cmd "Union" (String.concat " " 
+                            [(Hashtbl.find shape_map (string_of_expr(s1))); 
+                            (Hashtbl.find shape_map (string_of_expr(s2)))]) in
+        build_string union_cmd "unionf" expr;
+      
+      | A.Call ("Intersect", [s1; s2]) -> 
+        let inter_cmd = get_cork_cmd "Intersect" (String.concat " " 
+                            [(Hashtbl.find shape_map (string_of_expr(s1))); 
+                            (Hashtbl.find shape_map (string_of_expr(s2)))]) in
+        build_string inter_cmd "intersectf" expr;
+ 
+      | A.Call ("Difference", [s1; s2]) -> 
+         let diffe_cmd = get_cork_cmd "Difference" (String.concat " " 
+                            [(Hashtbl.find shape_map (string_of_expr(s1))); 
+                            (Hashtbl.find shape_map (string_of_expr(s2)))]) in
+        build_string diffe_cmd "differencef" expr;
+      | A.Call ("Xor", [s1; s2]) -> 
+         let xor_cmd = get_cork_cmd "Xor" (String.concat " " 
+                            [(Hashtbl.find shape_map (string_of_expr(s1))); 
+                            (Hashtbl.find shape_map (string_of_expr(s2)))]) in
+        build_string xor_cmd "xorf" expr;
       | A.Call ("Save", [s; n]) -> 
         let save_cmd = get_cork_cmd "Save" (String.concat " " 
                             [(Hashtbl.find shape_map (string_of_expr(s)));  
                             string_of_expr(n)]) in  
-        build_string save_cmd "savef" expr;  
+        build_string save_cmd "savef" expr; 
       | A.Call ("Render", [s]) -> 
         let rend_cmd = get_cork_cmd "Render" (Hashtbl.find shape_map (string_of_expr(s))) in
         build_string rend_cmd "rendf" expr; 
