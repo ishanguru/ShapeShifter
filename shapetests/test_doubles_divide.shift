@@ -5,7 +5,7 @@ int scene() {
     double c;
 
     a = 10.0; 
-    b = -2.0; 
+    b = 2.0; 
     c = b / a; 
     print(c); 
 
