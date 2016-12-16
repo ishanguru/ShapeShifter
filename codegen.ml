@@ -369,16 +369,12 @@ let translate (globals, functions) =
           add_shape_type t n;  
 
           match e with
-            | A.CubePrim -> 
-              let cube_file = "./graphics/.primitives/cube.off" in
-              let cmd_list = ["cp"; cube_file; (Hashtbl.find shape_map n)] in
-              let cmd_str = String.concat " " cmd_list in 
-
-	          let string_head = expr builder (A.StrLit cmd_str) in 
-      	      let zero_const = L.const_int i32_t 0 in
-              let str = L.build_in_bounds_gep string_head [| zero_const |] "cubeconstr_str" builder in
-              L.build_call system_func [| str |] "cubeconstr" builder; 
-              builder
+            | A.CubePrim ->
+              let cube_cmd = get_cork_cmd "Save" (String.concat " "
+                            [(get_prim_file A.CubePrim); 
+                            (Hashtbl.find shape_map n)]) in
+              build_string cube_cmd "cubeconstrf" expr;
+              builder 
             | A.Noexpr -> builder
             | _ -> 
               let e' = expr builder e in
