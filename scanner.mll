@@ -24,8 +24,8 @@ rule token = parse
   | ')'             { RPAREN }
   | '{'             { LBRACE }
   | '}'             { RBRACE }
-  | '['             { LBRACK }      (* ADDED BY US *)
-  | ']'             { RBRACK }      (* ADDED BY US *)
+  | '['             { LBRACK }      
+  | ']'             { RBRACK }      
   | ';'             { SEMI }
   | ','             { COMMA }
   | '+'             { PLUS }
@@ -42,9 +42,9 @@ rule token = parse
   | "&&"            { AND }
   | "||"            { OR }
   | "!"             { NOT }
-  | "UN"            { UNION }       (* ADDED BY US *)
-  | "IN"            { INTERSECT }   (* ADDED BY US *)
-  | "DI"            { DIFFERENCE }  (* ADDED BY US *)
+  | "UN"            { UNION }       
+  | "IN"            { INTERSECT }   
+  | "DI"            { DIFFERENCE }  
   | "if"            { IF }
   | "else"          { ELSE }
   | "for"           { FOR }
@@ -52,22 +52,21 @@ rule token = parse
   | "return"        { RETURN }
   | "break"         { BREAK }
   | "int"           { INT }
-  | "double"        { DBL }         (* ADDED BY US *)
-  | "string"        { STRING }      (* ADDED BY US *)
+  | "double"        { DBL }         
+  | "string"        { STRING }      
   | "bool"          { BOOL }
-  | "Shape"         { SHAPE }       (* ADDED BY US *)
-  | "SPHERE"        { SPHERE_PRIM }  (* ADDED BY US *)
-  | "CUBE"          { CUBE_PRIM }    (* ADDED BY US *)
-  | "CYLINDER"      { CYLINDER_PRIM } (* ADDED BY US *)
-  | "TETRA"         { TETRA_PRIM }   (* ADDED BY US *)
-  | "CONE"          { CONE_PRIM }    (* ADDED BY US *)
-  | "NULL"          { NULL }        (* ADDED BY US *)
+  | "Shape"         { SHAPE }       
+  | "SPHERE"        { SPHERE_PRIM }  
+  | "CUBE"          { CUBE_PRIM }    
+  | "CYLINDER"      { CYLINDER_PRIM } 
+  | "TETRA"         { TETRA_PRIM }   
+  | "CONE"          { CONE_PRIM }    
   | "void"          { VOID }
   | "true"          { TRUE }
   | "false"         { FALSE }
   | integer as lxm  { INT_LIT(int_of_string lxm) }
-  | double as lxm   { DBL_LIT(float_of_string lxm) } (* ADDED BY US *)
-  | str_lit as lxm  { STR_LIT(strip_string lxm) } (* ADDED BY US *)
+  | double as lxm   { DBL_LIT(float_of_string lxm) }
+  | str_lit as lxm  { STR_LIT(strip_string lxm) }
   | id as lxm       { ID(lxm) }
   | _ as char       { raise (Failure("illegal character " ^ Char.escaped char)) }
   | eof             { EOF }
