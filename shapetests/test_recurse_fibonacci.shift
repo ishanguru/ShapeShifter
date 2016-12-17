@@ -1,0 +1,17 @@
+int fib(int x) {
+  if (x == 1) {
+    return 1;
+  }
+
+  if (x == 0) {
+    return 1;
+  }
+
+  return fib(x-1) + fib(x-2);
+}
+
+
+int scene() {
+  int x = fib(2+3);
+  print(x);
+}

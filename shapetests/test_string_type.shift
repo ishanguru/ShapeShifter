@@ -1,0 +1,5 @@
+int scene() {
+	string s;
+	s = "String types working";
+	print(s);
+}	
