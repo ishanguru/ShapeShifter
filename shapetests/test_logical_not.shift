@@ -1,0 +1,10 @@
+int scene() {
+    bool x = false;
+   
+    if(!x) {
+        print("hey, NOT is working");
+    }
+    else {
+        print("yikes.com");
+    }
+}
