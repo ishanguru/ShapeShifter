@@ -1,0 +1,16 @@
+
+int scene() {
+
+    Shape s = CUBE; 
+    Shape s2 = CUBE; 
+
+    Scale(s, 0.5, 0.5, 0.5);  
+
+    Translate(s, 0.0, 0.5, 0.0);
+
+    Shape su = Union(s, s2); 
+    Translate(su, 0.0, 1.0, 0.0);
+
+    Render(su); 
+    Save(su, "thing.off");
+}

@@ -203,7 +203,7 @@ void uploadMeshData()
     // Upload position data
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, shape.n_vertices*3*sizeof(float), shape.vertices));
     // Calc and upload normal data 
-    float *norms = (float *)malloc(shape.n_vertices*3*sizeof(float));
+    float *norms = (float *)malloc(shape.n_triangles*3*3*sizeof(float));
     if (!norms) {
         die("malloc failed");
     }
@@ -364,6 +364,5 @@ int main(int argc, char **argv)
     loadMesh(argv[1], &shape);     
    
     uploadMeshData(); 
-        
     glutMainLoop(); 
 }

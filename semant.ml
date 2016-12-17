@@ -1,8 +1,10 @@
-(* Semantic checking for the MicroC compiler *)
+(* Semantic checking for the ShapeShifter compiler *)
 
 open Ast
 
 module StringMap = Map.Make(String)
+
+let global_idents:(string, typ) Hashtbl.t = Hashtbl.create 50
 
 (* Semantic checking of a program. Returns void if successful,
    throws an exception if something is wrong.
@@ -10,7 +12,6 @@ module StringMap = Map.Make(String)
    Check each global variable, then check each function *)
 
 let check (globals, functions) =
-
   (* Raise an exception if the given list has a duplicate *)
   let report_duplicate exceptf list =
     let rec helper = function
@@ -22,20 +23,18 @@ let check (globals, functions) =
 
   (* Raise an exception if a given binding is to a void type *)
   let check_not_void exceptf = function
-      (Void, n) -> raise (Failure (exceptf n))
+    | (Void, n) -> raise (Failure (exceptf n))
     | _ -> ()
   in
   
-  (* Raise an exception of the given rvalue type cannot be assigned to
+  (* Raise an exception if the given rvalue type cannot be assigned to
      the given lvalue type *)
   let check_assign lvaluet rvaluet err =
      if lvaluet == rvaluet then lvaluet else raise err
   in
    
   (**** Checking Global Variables ****)
-
   List.iter (check_not_void (fun n -> "illegal void global " ^ n)) globals;
-   
   report_duplicate (fun n -> "duplicate global " ^ n) (List.map snd globals);
 
   (**** Checking Functions ****)
@@ -47,57 +46,66 @@ let check (globals, functions) =
     (List.map (fun fd -> fd.fname) functions);
 
   (* Function declaration for a named function *)
-  let built_in_decls =  StringMap.add "print"
+  let built_in_decls = StringMap.add "print"
      { typ = Void; fname = "print"; formals = [(Int, "x")];
-       locals = []; body = [] } (StringMap.singleton "printb"
+       body = [] }
+     (StringMap.singleton "printb"
      { typ = Void; fname = "printb"; formals = [(Bool, "x")];
-       locals = []; body = [] })
+       body = [] })
   in
      
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)
-                         built_in_decls functions
+    built_in_decls functions
   in
 
   let function_decl s = try StringMap.find s function_decls
-       with Not_found -> raise (Failure ("unrecognized function " ^ s))
+    with Not_found -> raise (Failure ("unrecognized function " ^ s))
   in
 
   let _ = function_decl "scene" in (* Ensure "scene" is defined *)
 
-  let check_function func =
+  let _ =
+      let add_symbol (t, n) =
+          Hashtbl.add global_idents n t
+      in
+      List.iter add_symbol globals
+  in
 
+  let check_function func =
     List.iter (check_not_void (fun n -> "illegal void formal " ^ n ^
       " in " ^ func.fname)) func.formals;
-
     report_duplicate (fun n -> "duplicate formal " ^ n ^ " in " ^ func.fname)
       (List.map snd func.formals);
 
-    List.iter (check_not_void (fun n -> "illegal void local " ^ n ^
-      " in " ^ func.fname)) func.locals;
-
-    report_duplicate (fun n -> "duplicate local " ^ n ^ " in " ^ func.fname)
-      (List.map snd func.locals);
-
     (* Type of each variable (global, formal, or local *)
-    let symbols = List.fold_left (fun m (t, n) -> StringMap.add n t m)
-	StringMap.empty (globals @ func.formals @ func.locals )
+    let local_idents:(string, typ) Hashtbl.t = Hashtbl.create 50 in
+    let _ =
+        let add_symbol (t, n) =
+            Hashtbl.add local_idents n t
+        in
+        List.iter add_symbol (func.formals)
     in
 
     let type_of_identifier s =
-      try StringMap.find s symbols
-      with Not_found -> raise (Failure ("undeclared identifier " ^ s))
+      try Hashtbl.find local_idents s
+      with Not_found -> try Hashtbl.find global_idents s
+        with Not_found -> raise (Failure ("undeclared identifier " ^ s))
     in
 
     (* Return the type of an expression or throw an exception *)
     let rec expr = function
 	  | IntLit _ -> Int
+      | DblLit _ -> Dbl
+      | StrLit _ -> String
       | BoolLit _ -> Bool
       | Id s -> type_of_identifier s
       | Binop(e1, op, e2) as e -> let t1 = expr e1 and t2 = expr e2 in
           (match op with
-              Add | Sub | Mult | Div when t1 = Int && t2 = Int -> Int
+            | Add | Sub | Mult | Div when t1 = Int && t2 = Int -> Int
+            | Add | Sub | Mult | Div when t1 = Dbl && t2 = Dbl -> Dbl
             | Equal | Neq when t1 = t2 -> Bool
             | Less | Leq | Greater | Geq when t1 = Int && t2 = Int -> Bool
+            | Less | Leq | Greater | Geq when t1 = Dbl && t2 = Dbl -> Bool
             | And | Or when t1 = Bool && t2 = Bool -> Bool
             | _ -> raise (Failure ("illegal binary operator " ^
                           string_of_typ t1 ^ " " ^ string_of_op op ^ " " ^
@@ -119,17 +127,23 @@ let check (globals, functions) =
             raise (Failure ("expecting " ^ string_of_int
               (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
           else
-            List.iter2 (fun (ft, _) e -> let et = expr e in
+            (*List.iter2 (fun (ft, _) e -> let et = expr e in
                ignore (check_assign ft et
                  (Failure ("illegal actual argument found " ^ string_of_typ et ^
                  " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e))))
-              fd.formals actuals;
+              fd.formals actuals;*)
             fd.typ
+      | SpherePrim -> Shape
+      | CubePrim -> Shape
+      | CylinderPrim -> Shape
+      | TetraPrim -> Shape
+      | ConePrim -> Shape
     in
 
     let check_bool_expr e = if expr e != Bool
-     then raise (Failure ("expected Boolean expression in " ^ string_of_expr e))
-     else () in
+      then raise (Failure ("expected Boolean expression in " ^ string_of_expr e))
+      else ()
+    in
 
     (* Verify a statement or throw an exception *)
     let rec stmt = function
@@ -137,7 +151,7 @@ let check (globals, functions) =
           | [Return _ as s] -> stmt s
           | Return _ :: _ -> raise (Failure "nothing may follow a return")
           | Block sl :: ss -> check_block (sl @ ss)
-          | s :: ss -> stmt s ; check_block ss
+          | s :: ss -> stmt s; check_block ss
           | [] -> ()
         in check_block sl
       | Expr e -> ignore (expr e)
@@ -148,6 +162,12 @@ let check (globals, functions) =
       | For(e1, e2, e3, st) -> ignore (expr e1); check_bool_expr e2;
                                ignore (expr e3); stmt st
       | While(p, s) -> check_bool_expr p; stmt s
+      | Local(t, s, e) -> ignore (Hashtbl.add local_idents s t);
+          if expr e = Void then () else
+          if expr e = t then () else
+          raise (Failure ("expression has type " ^ string_of_typ (expr e) ^
+          " expected " ^ string_of_typ t))
+      | Break -> ()
     in
     stmt (Block func.body)
   in
