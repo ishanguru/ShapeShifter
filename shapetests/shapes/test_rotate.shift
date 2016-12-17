@@ -1,0 +1,11 @@
+// Rotate a tetra
+
+void scene() {
+    Shape tet;
+
+    tet = TETRA;
+
+    Rotate(tet, 0.0, 1.0, 0.0);
+    Render(tet);
+}
+
