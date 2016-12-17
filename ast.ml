@@ -20,7 +20,6 @@ type expr =
   | CylinderPrim
   | TetraPrim
   | ConePrim
-  | Null
   | Id of string
   | Binop of expr * op * expr
   | Unop of uop * expr
@@ -81,7 +80,6 @@ let rec string_of_expr = function
   | CylinderPrim -> "CYLINDER"
   | TetraPrim -> "TETRA"
   | ConePrim -> "CONE"
-  | Null -> "NULL"
   | Id(s) -> s
   | Binop(e1, o, e2) ->
       string_of_expr e1 ^ " " ^ string_of_op o ^ " " ^ string_of_expr e2

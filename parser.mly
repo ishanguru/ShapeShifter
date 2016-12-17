@@ -138,5 +138,4 @@ literal:
   | CONE_PRIM        { ConePrim }
   | TRUE             { BoolLit(true) }
   | FALSE            { BoolLit(false) }
-  | NULL             { Null }
   | ID               { Id($1) }
