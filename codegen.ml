@@ -302,29 +302,6 @@ let translate (globals, functions) =
                             string_of_expr(z)]) in
         build_string trans_cmd "translatef" expr;
       
-      (* Boolean shape operations *)
-      | A.Call ("Union", [s1; s2]) -> 
-        let union_cmd = get_cork_cmd "Union" (String.concat " " 
-                            [(Hashtbl.find shape_map (string_of_expr(s1))); 
-                            (Hashtbl.find shape_map (string_of_expr(s2)))]) in
-        build_string union_cmd "unionf" expr;
-      
-      | A.Call ("Intersect", [s1; s2]) -> 
-        let inter_cmd = get_cork_cmd "Intersect" (String.concat " " 
-                            [(Hashtbl.find shape_map (string_of_expr(s1))); 
-                            (Hashtbl.find shape_map (string_of_expr(s2)))]) in
-        build_string inter_cmd "intersectf" expr;
- 
-      | A.Call ("Difference", [s1; s2]) -> 
-         let diffe_cmd = get_cork_cmd "Difference" (String.concat " " 
-                            [(Hashtbl.find shape_map (string_of_expr(s1))); 
-                            (Hashtbl.find shape_map (string_of_expr(s2)))]) in
-        build_string diffe_cmd "differencef" expr;
-      | A.Call ("Xor", [s1; s2]) -> 
-         let xor_cmd = get_cork_cmd "Xor" (String.concat " " 
-                            [(Hashtbl.find shape_map (string_of_expr(s1))); 
-                            (Hashtbl.find shape_map (string_of_expr(s2)))]) in
-        build_string xor_cmd "xorf" expr;
       | A.Call ("Save", [s; n]) -> 
         let save_cmd = get_cork_cmd "Save" (String.concat " " 
                             [(Hashtbl.find shape_map (string_of_expr(s)));  
@@ -398,7 +375,7 @@ let translate (globals, functions) =
             
           let make_prim_cmd p n =
             ( 
-            let prim_cmd = get_cork_cmd "Save" (String.concat " "
+              let prim_cmd = get_cork_cmd "Save" (String.concat " "
                             [(get_prim_file p); 
                             (Hashtbl.find shape_map n)]) in
               build_string prim_cmd ((string_of_expr p )^"f") expr;
@@ -406,7 +383,17 @@ let translate (globals, functions) =
             )
           in   
  
+          let make_boolop_cmd op s1 s2 n = 
+            let cmd_str = get_cork_cmd op (String.concat " " 
+                            [(Hashtbl.find shape_map (string_of_expr(s1))); 
+                            (Hashtbl.find shape_map (string_of_expr(s2)));
+                            (Hashtbl.find shape_map n)]) in
+            build_string cmd_str (op^"f") expr;
+            builder
+          in
+ 
           match e with
+            (* Call primitive constructors *)
             | A.ConePrim        ->
               make_prim_cmd A.ConePrim n
             | A.CubePrim        ->
@@ -417,7 +404,15 @@ let translate (globals, functions) =
               make_prim_cmd A.SpherePrim n
             | A.TetraPrim       -> 
               make_prim_cmd A.TetraPrim n
- 
+            (* Boolean shape operations create a new shape*)
+            | A.Call ("Union", [s1; s2]) -> 
+              make_boolop_cmd "Union" s1 s2 n
+            | A.Call ("Intersect", [s1; s2]) ->
+              make_boolop_cmd "Intersect" s1 s2 n 
+            | A.Call ("Difference", [s1; s2]) -> 
+              make_boolop_cmd "Difference" s1 s2 n
+            | A.Call ("Xor", [s1; s2]) -> 
+              make_boolop_cmd "Xor" s1 s2 n
             | A.Noexpr -> builder
             | _ -> 
               let e' = expr builder e in
