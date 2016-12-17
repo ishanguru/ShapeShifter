@@ -1,0 +1,11 @@
+int scene() {
+    int x = 10;
+    int y = 20;
+    int z = 1;
+    if(x < y && z==1) {
+        print("hey, AND is working");
+    }
+    else {
+        print("yikes.com");
+    }
+}
