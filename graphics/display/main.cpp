@@ -204,16 +204,12 @@ void uploadMeshData()
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, shape.n_vertices*3*sizeof(float), shape.vertices));
     // Calc and upload normal data 
     float *norms = (float *)malloc(shape.n_triangles*3*3*sizeof(float));
-    fprintf(stdout, "norms: %d, size %d tri: %d\n", norms, (shape.n_vertices*3*sizeof(float)), shape.n_triangles);
     if (!norms) {
         die("malloc failed");
     }
-    fprintf(stdout, "calcin' norms\n");
     calcNormals(shape.vertices, shape.triangles, norms, shape.n_triangles);
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.n_vertices*3*sizeof(float), norms));
-    fprintf(stdout, "bout to free them norms\n");
     free(norms);
-    fprintf(stdout, "freed them norms\n");
 
     CHECK_GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.n_triangles*3*sizeof(uint), shape.triangles, GL_STATIC_DRAW)); 
  
@@ -365,12 +361,8 @@ int main(int argc, char **argv)
  
     initOpenGLandGLUT(argc, argv); 
 
-    fprintf(stdout, "loading mesh\n");
     loadMesh(argv[1], &shape);     
-    fprintf(stdout, "loaded mesh\n");
-    fprintf(stdout, "uploading mesh\n");
    
     uploadMeshData(); 
-    fprintf(stdout, "uploaded mesh\n");
     glutMainLoop(); 
 }
