@@ -144,7 +144,7 @@ let translate (globals, functions) =
     in
 
     (* Add types as necessary *)
-    let string_of_expr = function 
+    let rec string_of_expr = function 
       | A.Id(s)         -> s 
       | A.DblLit(s)     -> string_of_float s
       | A.IntLit(s)     -> string_of_int s
@@ -154,6 +154,7 @@ let translate (globals, functions) =
       | A.CylinderPrim  -> "cylinderprim"
       | A.SpherePrim    -> "sphereprim"
       | A.TetraPrim     -> "tetraprim"
+      | A.Binop(e1, op, e2) -> string_of_expr e1
     in
  
     let build_string s n expr = 
@@ -212,6 +213,14 @@ let translate (globals, functions) =
         | A.Geq     -> L.build_fcmp L.Fcmp.Oge
       )
     in
+
+(*     let shape_ops op = 
+      (match op with
+        A.Union           -> 
+        | A.Intersect     -> 
+        | A.Difference    -> 
+      )
+    in *)
     
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
@@ -232,7 +241,7 @@ let translate (globals, functions) =
 	    and e2' = expr builder e2 in
 
 	    (match e1 with 
-    	  | A.IntLit i -> (integer_ops op) e1' e2' "tmp" builder
+    	 | A.IntLit i -> (integer_ops op) e1' e2' "tmp" builder
           | A.DblLit d -> (double_ops op) e1' e2' "tmp" builder
           | A.Id id ->  
           (* We need to match with each type that ID can take, use StringMap for storing types *)
@@ -242,6 +251,13 @@ let translate (globals, functions) =
             | A.Dbl ->  (double_ops op) e1' e2' "tmp" builder
             | A.Int ->  (integer_ops op) e1' e2' "tmp" builder
           ) 
+
+          | A.Call (st, [expr]) -> let fdecl = snd (StringMap.find st function_decls)
+                                   in match fdecl.A.typ with
+                                     | A.Dbl ->  (double_ops op) e1' e2' "tmp" builder
+                                     | A.Int ->  (integer_ops op) e1' e2' "tmp" builder
+
+                                  
 	    )
   
       | A.Unop(op, e) ->
