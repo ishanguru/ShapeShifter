@@ -5,6 +5,7 @@
 #include <GL/glut.h>
 #include <GL/glext.h>
 #include <cstdio>
+#include <cstring>
 #include <cmath>
 #include <algorithm>
 
@@ -51,10 +52,14 @@ double camTheta = 0.0;
 double camPhi = 90.0; 
 double camR = 4.0; 
 double camX, camY, camZ; 
-
+double upX = 0.0; 
+double upY = 1.0; 
+double upZ = 0.0; 
 CorkTriMesh shape; 
 GLuint vbo; // vertex buffer object, stores triangle vertex info
 GLuint ibo; // index buffer object, stores indices of triangles
+
+float *norms; 
 
 float xTrans, yTrans, zTrans; 
 void reshape(int w, int h)
@@ -83,23 +88,24 @@ void keyboard(unsigned char key, int x, int y)
         break; 
     case '+': 
         camR = std::max(.01, camR-dcam);
-        camX = camR * sin(theta) * sin(phi);
-        camY = camR * cos(theta);
-        camZ = camR * sin(theta) * cos(phi); 
+        camX = camR * cos(theta) * cos(phi);
+        camY = camR * sin(theta);
+        camZ = camR * cos(theta) * sin(phi); 
         glutPostRedisplay();
-        //fprintf(stdout, "cam: (%f, %f, %f): %f\n", camX, camY, camZ, std::sqrt(camX*camX + camY*camY + camZ*camZ));
         break; 
     case '-': 
         camR += dcam; 
-        camX = camR * sin(theta) * sin(phi);
-        camY = camR * cos(theta);
-        camZ = camR * sin(theta) * cos(phi); 
+        camX = camR * cos(theta) * cos(phi);
+        camY = camR * sin(theta);
+        camZ = camR * cos(theta) * sin(phi); 
         glutPostRedisplay();
         break; 
     default: 
         break; 
     }
    
+    //fprintf(stdout, "cam: (%f, %f, %f): %f\n", camX, camY, camZ, std::sqrt(camX*camX + camY*camY + camZ*camZ));
+
     // add other key functions - zoom? translate? animate?
     // toggle axis display
 }
@@ -126,9 +132,9 @@ void special(int key, int x, int y)
 
     double theta = camTheta*PI/180.0; 
     double phi = camPhi*PI/180.0;
-    camX = camR * sin(theta) * sin(phi);
-    camY = camR * cos(theta);
-    camZ = camR * sin(theta) * cos(phi); 
+    camX = camR * cos(theta) * cos(phi);
+    camY = camR * sin(theta);
+    camZ = camR * cos(theta) * sin(phi); 
   
     glutPostRedisplay(); 
 
@@ -151,13 +157,14 @@ void idle()
 
 }
 
-void calcNormals(float *pos, unsigned int *ind, float *norms, int n)
+void calcNormals(float *pos, unsigned int *ind, float *norms, int ntri, int nv)
 {
     // triangle vertex positions
     float u0, u1, u2, v0, v1, v2, w0, w1, w2; 
     float a0, a1, a2, b0, b1, b2; // edge vectors uv, uw
     float n0, n1, n2; 
-    for(int i = 0; i < n; ++i) {
+    // For each triangle, calc normal, set for each vertex
+    for(int i = 0; i < ntri; ++i) {
         u0 = pos[ind[i*3]*3];
         u1 = pos[ind[i*3]*3+1];
         u2 = pos[ind[i*3]*3+2];
@@ -179,14 +186,30 @@ void calcNormals(float *pos, unsigned int *ind, float *norms, int n)
         n1 = a2 * b0 - a0 * b2;
         n2 = a0 * b1 - a1 * b0;
         
-        float d = std::sqrt(n0*n0 + n1*n1 + n2*n2);
-        n0 = n0/d;
-        n1 = n1/d;
-        n2 = n2/d;
-        norms[i*3] = n0;
-        norms[i*3+1] = n1;
-        norms[i*3+2] = n2;
+        // Add normal for all 3 vertices
+        
+        norms[ind[i*3]*3] += n0;
+        norms[ind[i*3]*3+1] += n1;
+        norms[ind[i*3]*3+2] += n2;
+        norms[ind[i*3+1]*3] += n0;
+        norms[ind[i*3+1]*3+1] += n1;
+        norms[ind[i*3+1]*3+2] += n2;
+        norms[ind[i*3+2]*3] += n0;
+        norms[ind[i*3+2]*3+1] += n1;
+        norms[ind[i*3+2]*3+2] += n2;
     }
+    
+    float d = 0;  
+    for (int i = 0; i < nv; ++i) {
+        n0 = norms[i*3]; 
+        n1 = norms[i*3+1];
+        n2 = norms[i*3+2];
+        d = std::max(.0001f, std::sqrt(n0*n0 + n1*n1 + n2*n2));
+        norms[i*3] = n0/d; 
+        norms[i*3+1] = n1/d;
+        norms[i*3+2] = n2/d; 
+
+    } 
 }
 
 void uploadMeshData()
@@ -203,13 +226,14 @@ void uploadMeshData()
     // Upload position data
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, shape.n_vertices*3*sizeof(float), shape.vertices));
     // Calc and upload normal data 
-    float *norms = (float *)malloc(shape.n_triangles*3*3*sizeof(float));
+    norms = (float *)malloc(shape.n_vertices*3*sizeof(float));
     if (!norms) {
         die("malloc failed");
     }
-    calcNormals(shape.vertices, shape.triangles, norms, shape.n_triangles);
+    memset(norms, 0, shape.n_vertices*3*sizeof(float));
+    calcNormals(shape.vertices, shape.triangles, norms, shape.n_triangles, shape.n_vertices);
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.n_vertices*3*sizeof(float), norms));
-    free(norms);
+    //free(norms);
 
     CHECK_GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.n_triangles*3*sizeof(uint), shape.triangles, GL_STATIC_DRAW)); 
  
@@ -226,11 +250,11 @@ void display()
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    CHECK_GL(gluLookAt(camX, camY, camZ, 0, 0, 0, 0, 1, 0));
+    CHECK_GL(gluLookAt(camX, camY, camZ, 0, 0, 0, upX, upY, upZ));
     //CHECK_GL(gluLookAt(camX, camY, camZ, 0, 0, 0, 0, 1, 0));
-
-
+ 
     // Draw axes
+    glLineWidth(1.0);
     glBegin(GL_LINES);  
     glColor3f(1.0, 0.0, 0.0); // x 
     glVertex3f(-100.0, 0.0, 0.0); 
@@ -242,7 +266,7 @@ void display()
     glVertex3f(0.0, 0.0, -100.0); 
     glVertex3f(0.0, 0.0, 100.0); 
     glEnd(); 
-
+    
     glColor3f(.2, .2, .2);
 
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, vbo)); 
@@ -258,6 +282,21 @@ void display()
 
     //CHECK_GL(glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void *)0)); 
 
+    glColor3f(1.0, 1.0, 1.0);
+    glLineWidth(5.0);
+    // draw normals yo
+    
+    glBegin(GL_LINES);
+    float px, py, pz; 
+    for (int i = 0; i < shape.n_vertices; ++i) {
+        px = shape.vertices[i*3]; 
+        py = shape.vertices[i*3+1];
+        pz = shape.vertices[i*3+2];
+        glVertex3f(px, py, pz);
+        glVertex3f(px+norms[i*3], py+norms[i*3+1], pz+norms[i*3+2]);    
+        //fprintf(stdout, "(%f, %f, %f): (%f, %f, %f)\n", px, py, pz, norms[i*3], norms[i*3+1], norms[i*3+2]);
+    }
+    glEnd(); 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     CHECK_GL(glDisableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glDisableClientState(GL_NORMAL_ARRAY));
@@ -313,8 +352,8 @@ void initOpenGLandGLUT(int argc, char **argv)
     // Set camera coordinates
     double theta = camTheta*PI/180.0; 
     double phi = camPhi*PI/180.0;
-    camX = camR * sin(theta) * sin(phi);
-    camY = camR * cos(theta);
+    camX = camR * cos(theta) * cos(phi);
+    camY = camR * sin(theta);
     camZ = camR * cos(theta) * sin(phi); 
    
     reshape(windowWidth, windowHeight); 
