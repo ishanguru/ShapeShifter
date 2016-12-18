@@ -256,38 +256,53 @@ let translate (globals, functions) =
                                    in match fdecl.A.typ with
                                      | A.Dbl ->  (double_ops op) e1' e2' "tmp" builder
                                      | A.Int ->  (integer_ops op) e1' e2' "tmp" builder
-
                                   
 	    )
   
       | A.Unop(op, e) ->
 	    let e' = expr builder e in
 	    (match op with
-	  	  A.Neg       -> L.build_neg
+	  	    | A.Neg     -> 
+              (match e with
+              | A.IntLit i -> L.build_neg
+              | A.DblLit d -> L.build_fneg
+              | A.Id id -> 
+                  let variable_type = lookup_type id in
+                    (
+                      match variable_type with      
+                      | A.Dbl -> L.build_fneg 
+                      | A.Int -> L.build_neg
+                    )
+              | _ -> raise (Failure "Invalid Operator")
+              )
           | A.Not     -> L.build_not) e' "tmp" builder
-          | A.Assign (s, e) -> let e' = expr builder e in
-            ignore (L.build_store e' (lookup s) builder); e'
-          | A.Call ("print", [e]) ->
-            let print_strlit s =
-            let string_head = expr builder (s) in
-            let zero_const = L.const_int i32_t 0 in
-            let str = L.build_in_bounds_gep string_head [| zero_const |] "str_printf" builder in
-            L.build_call printf_func [| str |] "str_printf" builder in  
+     
+      | A.Assign (s, e) -> let e' = expr builder e in
+        ignore (L.build_store e' (lookup s) builder); e'
+     
+      | A.Call ("print", [e]) ->
+        let print_strlit s =
+        let string_head = expr builder (s) in
+        let zero_const = L.const_int i32_t 0 in
+        let str = L.build_in_bounds_gep string_head [| zero_const |] "str_printf" builder in
+        L.build_call printf_func [| str |] "str_printf" builder in  
 
-      	    (match List.hd[e] with 
-      		  | A.StrLit s ->
-                print_strlit (List.hd[e])
-      		  | A.DblLit d     -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
-      		  | A.IntLit i     -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
-      		  | A.Id id        -> 
-      		    let variable_type = lookup_type id in
-      		    (
-      		      match variable_type with 
-      			    | A.Dbl    -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
-      				| A.Int    -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
-                    | A.String -> print_strlit (List.hd[e])         
-                )
-	        )
+  	    (match List.hd[e] with 
+  		  | A.StrLit s ->
+            print_strlit (List.hd[e])
+  		  | A.DblLit d     -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
+  		  | A.IntLit i     -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
+  		  | A.Id id        -> 
+  		    let variable_type = lookup_type id in
+  		    (
+  		      match variable_type with 
+  			    | A.Dbl    -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
+  				  | A.Int    -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
+            | A.String -> print_strlit (List.hd[e])         
+          )
+
+        | _ -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "str_printf" builder
+        )
     
       (* Transformation calls *)
       | A.Call ("Reflect", [s; a; b; c]) -> 
