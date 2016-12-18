@@ -60,7 +60,7 @@ GLuint vbo; // vertex buffer object, stores triangle vertex info
 GLuint ibo; // index buffer object, stores indices of triangles
 
 // Set up lighting and material properties
-GLfloat lightPos0[] = {10.0, 10.0, 0.0, 10.0}; 
+GLfloat lightPos0[] = {10.00001, 10.00001, 0.000001, 10.0}; 
 GLfloat lightAmb0[] = {0.1, 0.1, 0.1, 1.0}; 
 GLfloat lightDiff0[] = {1.0, 1.0, 1.0, 1.0}; 
 GLfloat lightSpec0[] = {1.0, 1.0, 1.0, 1.0}; 
@@ -81,7 +81,7 @@ void reshape(int w, int h)
     CHECK_GL(glViewport(0, 0, windowWidth, windowHeight)); 
     CHECK_GL(glMatrixMode(GL_PROJECTION));
     CHECK_GL(glLoadIdentity()); 
-    CHECK_GL(gluPerspective(80, (GLfloat)windowWidth/windowHeight, 1, 1000));
+    CHECK_GL(gluPerspective(80, (GLfloat)windowWidth/windowHeight, .001, 1000));
     CHECK_GL(glMatrixMode(GL_MODELVIEW));   
     glutPostRedisplay();
 }
@@ -314,6 +314,7 @@ void display()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     CHECK_GL(glLightfv(GL_LIGHT0, GL_POSITION, lightPos0));   
     CHECK_GL(glEnable(GL_DEPTH_TEST));
+    //CHECK_GL(glEnable(GL_NORMALIZE));
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -338,7 +339,7 @@ void display()
     CHECK_GL(glEnable(GL_LIGHT0));
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-     
+    //CHECK_GL(glFrontFace(GL_CW)); 
    
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, vbo)); 
     CHECK_GL(glEnableClientState(GL_VERTEX_ARRAY));
@@ -369,7 +370,7 @@ void display()
     // draw face normals
     glColor3f(0.0, 1.0, 1.0);
     glBegin(GL_LINES); 
-    for (int i = 0; i < shape.n_triangles; ++i) {
+    for (int i = 0; i < (int)shape.n_triangles; ++i) {
         px = shape.vertices[shape.triangles[i*3]*3];
         py = shape.vertices[shape.triangles[i*3]*3+1];
         pz = shape.vertices[shape.triangles[i*3]*3+2];
@@ -423,7 +424,9 @@ void initOpenGLandGLUT(int argc, char **argv)
     CHECK_GL(glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb0)); 
     CHECK_GL(glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiff0)); 
     CHECK_GL(glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpec0));    
- 
+
+    CHECK_GL(glShadeModel(GL_SMOOTH));
+
     // Set camera coordinates
     double theta = camTheta*PI/180.0; 
     double phi = camPhi*PI/180.0;
