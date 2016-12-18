@@ -68,10 +68,11 @@ GLfloat lightSpec0[] = {1.0, 1.0, 1.0, 1.0};
 
 float xTrans, yTrans, zTrans; 
 
+#if defined(debug)
 float *norms; 
-float *normws;
 float *fnorms; 
 bool drawNorms = 0;
+#endif
 
 void reshape(int w, int h)
 {
@@ -111,10 +112,12 @@ void keyboard(unsigned char key, int x, int y)
         camZ = camR * cos(theta) * sin(phi); 
         glutPostRedisplay();
         break; 
+#if defined(debug)
     case 'n': 
         drawNorms = !drawNorms; 
         glutPostRedisplay();
         break; 
+#endif
     default: 
         break; 
     }
@@ -235,10 +238,12 @@ void calcNormals(float *pos, unsigned int *ind, float *norms, int ntri, int nv)
         n1 = n1/d;
         n2 = n2/d; 
 
+#if defined(debug)
         fnorms[i*3] = n0;
         fnorms[i*3+1] = n1;
         fnorms[i*3+2] = n2; 
-     
+#endif     
+
         // weigh by angle
   
         norms[ind[i*3]*3] += n0*au;
@@ -250,7 +255,6 @@ void calcNormals(float *pos, unsigned int *ind, float *norms, int ntri, int nv)
         norms[ind[i*3+2]*3] += n0*aw;
         norms[ind[i*3+2]*3+1] += n1*aw;
         norms[ind[i*3+2]*3+2] += n2*aw;
-
     }
     
     for (int i = 0; i < nv; ++i) {
@@ -261,7 +265,6 @@ void calcNormals(float *pos, unsigned int *ind, float *norms, int ntri, int nv)
         norms[i*3] = n0/d; 
         norms[i*3+1] = n1/d;
         norms[i*3+2] = n2/d; 
-
     } 
 }
 
@@ -279,17 +282,26 @@ void uploadMeshData()
     // Upload position data
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, shape.n_vertices*3*sizeof(float), shape.vertices));
     // Calc and upload normal data 
+
+#if defined(debug)
     norms = (float *)malloc(shape.n_vertices*3*sizeof(float));
     fnorms = (float *)malloc(shape.n_triangles*3*sizeof(float));
-    normws = (float *)malloc(shape.n_vertices*sizeof(float));
-    if (!norms || !fnorms || !normws) {
+    if (!norms || !fnorms) {
         die("malloc failed");
     }
+#else
+    float *norms = (float *)malloc(shape.n_vertices*3*sizeof(float));
+    if (!norms) {
+        die("malloc failed");
+    }
+#endif
+
     memset(norms, 0, shape.n_vertices*3*sizeof(float));
-    memset(normws, 0, shape.n_vertices*sizeof(float));
     calcNormals(shape.vertices, shape.triangles, norms, shape.n_triangles, shape.n_vertices);
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.n_vertices*3*sizeof(float), norms));
-    //free(norms);
+#if !defined(debug)
+    free(norms);
+#endif
 
     CHECK_GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.n_triangles*3*sizeof(uint), shape.triangles, GL_STATIC_DRAW)); 
  
@@ -332,19 +344,20 @@ void display()
     CHECK_GL(glEnableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glVertexPointer(3, GL_FLOAT, 0, 0)); 
     CHECK_GL(glEnableClientState(GL_NORMAL_ARRAY));
-    CHECK_GL(glNormalPointer(GL_FLOAT, 0, (char *)(shape.n_vertices*3)));
+    CHECK_GL(glNormalPointer(GL_FLOAT, 0, (char *)((intptr_t)(shape.n_vertices*3))));
 
 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
     CHECK_GL(glDrawElements(GL_TRIANGLES, shape.n_triangles*3, GL_UNSIGNED_INT, (void*)0));
 
+#if defined(debug)
     // draw normals yo
     if(drawNorms) {
         glLineWidth(3.0);
         float px, py, pz; 
         glBegin(GL_LINES);
         glColor3f(1.0, 1.0, 1.0);
-        for (int i = 0; i < shape.n_vertices; ++i) {
+        for (int i = 0; i < (int)shape.n_vertices; ++i) {
             px = shape.vertices[i*3]; 
             py = shape.vertices[i*3+1];
             pz = shape.vertices[i*3+2];
@@ -366,6 +379,7 @@ void display()
     glEnd();
 */
     }
+#endif
 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     CHECK_GL(glDisableClientState(GL_VERTEX_ARRAY));
