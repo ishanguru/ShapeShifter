@@ -1,0 +1,14 @@
+string greeting(string name) {
+    return name;
+}
+
+int scene() {
+    string greet = greeting("Steph ");
+    string name = "PC ";
+    string greet2 = greeting(name);
+    print("Hello ");
+    print(greet);
+    print("Hello ");
+    print(greet2);
+}
+

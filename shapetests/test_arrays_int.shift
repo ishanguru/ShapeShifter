@@ -1,0 +1,9 @@
+int scene() {
+    int a[5] = {0, 1, 2, 3, 4};
+    int i = 0;
+    while(i<5) {
+        int x = a[i];
+        print(x);
+        i = i+1;
+    }
+}

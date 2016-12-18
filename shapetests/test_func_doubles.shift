@@ -1,0 +1,11 @@
+double add(double x, double y) {
+    double z = x + y;
+    return z;
+}
+
+int scene() {
+    double x = 3.5;
+    double y = 3.5;
+    double z = add(x, y);
+    print(z);
+}
