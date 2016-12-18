@@ -11,7 +11,7 @@ LLI="lli"
 
 # Path to the ShapeShifter compiler. 
 # Try "_build/shapeshifter.native" if ocamlbuild was unable to create a symbolic link.
-SHAPE="./shapeshifter.native"
+SHAPE="./shapeshifter"
 #SHAPE="_build/shapeshifter.native"
 
 # Set time limit for all operations

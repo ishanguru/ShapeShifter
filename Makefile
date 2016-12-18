@@ -9,8 +9,9 @@
 shapeshifter.native :
 	ocamlbuild -use-ocamlfind -pkgs llvm,llvm.analysis -cflags -w,+a-4 \
 		shapeshifter.native
-	$(MAKE) -C graphics/cork
-	$(MAKE) -C graphics/display
+	# $(MAKE) -C graphics/cork
+	# $(MAKE) -C graphics/display
+	@mv shapeshifter.native shapeshifter
 
 # "make clean" removes all generated files
 
@@ -20,8 +21,8 @@ clean :
 	rm -rf testall.log *.diff shapeshifter scanner.ml parser.ml parser.mli
 	rm -rf *.cmx *.cmi *.cmo *.cmx *.o
 	rm -rf *.ll *.out *.err
-	$(MAKE) -C ./graphics/cork clean
-	$(MAKE) -C ./graphics/display clean
+	#$(MAKE) -C ./graphics/cork clean
+	#$(MAKE) -C ./graphics/display clean
 
 # More detailed: build using ocamlc/ocamlopt + ocamlfind to locate LLVM
 
