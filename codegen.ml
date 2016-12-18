@@ -305,14 +305,8 @@ let translate (globals, functions) =
   				  | A.Int    -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
             | A.String -> print_strlit (List.hd[e])         
           )
-
-        (* | A.Unop (op, val) -> 
-            match val with 
-              (
-                | A.Dbl -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
-                | A.Int -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
-              ) *)
-        )
+      		  | A.Unop (op, e) -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
+	        )
     
       (* Transformation calls *)
       | A.Call ("Reflect", [s; a; b; c]) -> 
