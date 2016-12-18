@@ -154,7 +154,12 @@ let translate (globals, functions) =
       | A.CylinderPrim  -> "cylinderprim"
       | A.SpherePrim    -> "sphereprim"
       | A.TetraPrim     -> "tetraprim"
+      | A.Unop(o, z)    -> 
+          (match z with
+          | A.DblLit(s) -> A.string_of_uop o ^ string_of_float s 
+          | _ -> raise (Failure "Invalid"))
       | A.Binop(e1, op, e2) -> string_of_expr e1
+      | _ -> raise (Failure "Invalid")
     in
  
     let build_string s n expr = 
@@ -301,7 +306,12 @@ let translate (globals, functions) =
             | A.String -> print_strlit (List.hd[e])         
           )
 
-        | _ -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "str_printf" builder
+        (* | A.Unop (op, val) -> 
+            match val with 
+              (
+                | A.Dbl -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
+                | A.Int -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
+              ) *)
         )
     
       (* Transformation calls *)
