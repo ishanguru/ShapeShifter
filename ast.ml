@@ -34,7 +34,6 @@ type stmt =
   | If of expr * stmt * stmt
   | For of expr * expr * expr * stmt
   | While of expr * stmt
-  | Break
   | Local of typ * string * expr
 
 type func_decl = {
@@ -109,7 +108,6 @@ let rec string_of_stmt = function
       "for (" ^ string_of_expr e1  ^ " ; " ^ string_of_expr e2 ^ " ; " ^
       string_of_expr e3  ^ ") " ^ string_of_stmt s
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
-  | Break -> "break"
   | Local(t, s, e) -> if (String.length (string_of_expr e)) = 0 then
       string_of_typ t ^ " " ^ s ^ ";\n" else
       string_of_typ t ^ " " ^ s ^ " = " ^ string_of_expr e ^ ";\n"

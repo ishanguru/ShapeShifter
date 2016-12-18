@@ -50,7 +50,6 @@ rule token = parse
   | "for"           { FOR }
   | "while"         { WHILE }
   | "return"        { RETURN }
-  | "break"         { BREAK }
   | "int"           { INT }
   | "double"        { DBL }         
   | "string"        { STRING }      

@@ -98,7 +98,6 @@
 | IntLit(x) -> "IntLit(" ^ string_of_int x^")")) obj)
 
  and  string_of_stmt obj = (((function Local(obj1, obj2, obj3) -> "Local(" ^ (string_of_typ obj1) ^ ", " ^ (string_of_string obj2) ^ ", " ^ (string_of_expr obj3) ^ ")"
-| Break -> "Break"
 | While(obj1, obj2) -> "While(" ^ (string_of_expr obj1) ^ ", " ^ (string_of_stmt obj2) ^ ")"
 | For(obj1, obj2, obj3, obj4) -> "For(" ^ (string_of_expr obj1) ^ ", " ^ (string_of_expr obj2) ^ ", " ^ (string_of_expr obj3) ^ ", " ^ (string_of_stmt obj4) ^ ")"
 | If(obj1, obj2, obj3) -> "If(" ^ (string_of_expr obj1) ^ ", " ^ (string_of_stmt obj2) ^ ", " ^ (string_of_stmt obj3) ^ ")"

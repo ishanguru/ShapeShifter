@@ -31,11 +31,11 @@ let translate (globals, functions) =
   and i8_t     = L.i8_type   context
   and i1_t     = L.i1_type   context
   and void_t   = L.void_type context
-  and double_t = L.double_type context
-  and i64_t    = L.i64_type  context in
-  let i64_pt   = L.pointer_type i64_t 
-  and i32_pt   = L.pointer_type i32_t 
-  and i8_pt    = L.pointer_type i8_t in
+  and double_t = L.double_type context in 
+  (* and i64_t    = L.i64_type  context in *)
+  (* let i64_pt   = L.pointer_type i64_t  *)
+  (* and i32_pt   = L.pointer_type i32_t  *)
+  let i8_pt    = L.pointer_type i8_t in
 
   let ltype_of_typ = function
       A.Int -> i32_t
@@ -97,7 +97,8 @@ let translate (globals, functions) =
           | "Intersect"       -> cork_exec ^ " -isct"
           | "Save"            -> "cp"
           | "Render"          -> render_exec
-          | "Xor"         -> cork_exec ^ " -xor" 
+          | "Xor"         -> cork_exec ^ " -xor"
+          | _ -> raise (Failure "Incorrect cork_cmd")
         )
       in
       (cork_cmd func) ^ " " ^ args
@@ -111,6 +112,7 @@ let translate (globals, functions) =
         | A.CylinderPrim    -> "./graphics/.primitives/cylinder.off"
         | A.SpherePrim      -> "./graphics/.primitives/sphere.off"
         | A.TetraPrim       -> "./graphics/.primitives/tetra.off"
+        | _ -> raise (Failure "Shape file for specified primitive not found")
     in
     
     let tmp_folder = "./.tmp/" in
@@ -158,7 +160,7 @@ let translate (globals, functions) =
           (match z with
           | A.DblLit(s) -> A.string_of_uop o ^ string_of_float s 
           | _ -> raise (Failure "Invalid"))
-      | A.Binop(e1, op, e2) -> string_of_expr e1
+      | A.Binop(e1, _, _) -> string_of_expr e1
       | _ -> raise (Failure "Invalid")
     in
  
@@ -199,6 +201,7 @@ let translate (globals, functions) =
         | A.Leq     -> L.build_icmp L.Icmp.Sle
         | A.Greater -> L.build_icmp L.Icmp.Sgt
         | A.Geq     -> L.build_icmp L.Icmp.Sge
+        | _ -> raise (Failure "Integer operator not found")
       )
     in
 
@@ -216,16 +219,9 @@ let translate (globals, functions) =
         | A.Leq     -> L.build_fcmp L.Fcmp.Ole
         | A.Greater -> L.build_fcmp L.Fcmp.Ogt
         | A.Geq     -> L.build_fcmp L.Fcmp.Oge
+        | _ -> raise (Failure "Double operator not found")
       )
     in
-
-(*     let shape_ops op = 
-      (match op with
-        A.Union           -> 
-        | A.Intersect     -> 
-        | A.Difference    -> 
-      )
-    in *)
     
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
@@ -233,7 +229,7 @@ let translate (globals, functions) =
       
       | A.StrLit s -> L.build_global_stringptr s "" builder
 	  
-	  | A.IntLit i -> L.const_int i32_t i
+	 | A.IntLit i -> L.const_int i32_t i
         
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       
@@ -246,8 +242,8 @@ let translate (globals, functions) =
 	    and e2' = expr builder e2 in
 
 	    (match e1 with 
-    	 | A.IntLit i -> (integer_ops op) e1' e2' "tmp" builder
-          | A.DblLit d -> (double_ops op) e1' e2' "tmp" builder
+    	    | A.IntLit _ -> (integer_ops op) e1' e2' "tmp" builder
+          | A.DblLit _ -> (double_ops op) e1' e2' "tmp" builder
           | A.Id id ->  
           (* We need to match with each type that ID can take, use StringMap for storing types *)
           let variable_type = lookup_type id in
@@ -255,13 +251,15 @@ let translate (globals, functions) =
             match variable_type with	  	
             | A.Dbl ->  (double_ops op) e1' e2' "tmp" builder
             | A.Int ->  (integer_ops op) e1' e2' "tmp" builder
-          ) 
+            | _ -> raise (Failure "A.Id variable type not found")
+          )
 
-          | A.Call (st, [expr]) -> let fdecl = snd (StringMap.find st function_decls)
+          | A.Call (st, [_]) -> (let fdecl = snd (StringMap.find st function_decls)
                                    in match fdecl.A.typ with
                                      | A.Dbl ->  (double_ops op) e1' e2' "tmp" builder
                                      | A.Int ->  (integer_ops op) e1' e2' "tmp" builder
-                                  
+                                     | _ -> raise (Failure "Type for call not found"))
+          | _ -> raise (Failure "No match found for specified binop")                           
 	    )
   
       | A.Unop(op, e) ->
@@ -269,18 +267,20 @@ let translate (globals, functions) =
 	    (match op with
 	  	    | A.Neg     -> 
               (match e with
-              | A.IntLit i -> L.build_neg
-              | A.DblLit d -> L.build_fneg
+              | A.IntLit _ -> L.build_neg
+              | A.DblLit _ -> L.build_fneg
               | A.Id id -> 
                   let variable_type = lookup_type id in
                     (
                       match variable_type with      
                       | A.Dbl -> L.build_fneg 
                       | A.Int -> L.build_neg
+                      | _ -> raise (Failure "A.Id type not found for A.Neg")
                     )
               | _ -> raise (Failure "Invalid Operator")
               )
           | A.Not     -> L.build_not) e' "tmp" builder
+          (* | _ -> raise (Failure "Unop not supported")) e' "tmp" builder *)
      
       | A.Assign (s, e) -> let e' = expr builder e in
         ignore (L.build_store e' (lookup s) builder); e'
@@ -293,21 +293,22 @@ let translate (globals, functions) =
         L.build_call printf_func [| str |] "str_printf" builder in  
 
   	    (match List.hd[e] with 
-  		  | A.StrLit s ->
+  		  | A.StrLit _ ->
             print_strlit (List.hd[e])
-  		  | A.DblLit d     -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
-  		  | A.IntLit i     -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
+  		  | A.DblLit _     -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
+  		  | A.IntLit _     -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
   		  | A.Id id        -> 
   		    let variable_type = lookup_type id in
   		    (
   		      match variable_type with 
   			    | A.Dbl    -> L.build_call printf_func [| dbl_format_str ; (expr builder e) |] "dbl_printf" builder
   				  | A.Int    -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
-            | A.String -> print_strlit (List.hd[e])         
+            | A.String -> print_strlit (List.hd[e])
+            | _ -> raise (Failure "Print not specified for this type")         
           )
-      		  | A.Unop (op, e) -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
+      		  | _ -> L.build_call printf_func [| int_format_str ; (expr builder e) |] "int_printf" builder
 	        )
-    
+      
       (* Transformation calls *)
       | A.Call ("Reflect", [s; a; b; c]) -> 
         let refle_cmd = get_cork_cmd "Reflect" (String.concat " " 
@@ -352,7 +353,11 @@ let translate (globals, functions) =
 	 	let result = (match fdecl.A.typ with A.Void -> ""
                                             | _ -> f ^ "_result") in
         L.build_call fdef (Array.of_list actuals) result builder
+
+      | _ -> raise (Failure "Match not found in expr builder")
+
     in
+
 
     (* Invoke "f builder" if the current block doesn't already
        have a terminal (e.g., a branch). *)
@@ -413,7 +418,7 @@ let translate (globals, functions) =
               let prim_cmd = get_cork_cmd "Save" (String.concat " "
                             [(get_prim_file p); 
                             (Hashtbl.find shape_map n)]) in
-              build_string prim_cmd ((string_of_expr p )^"f") expr;
+              ignore (build_string prim_cmd ((string_of_expr p )^"f") expr);
               builder 
             )
           in   
@@ -423,7 +428,7 @@ let translate (globals, functions) =
                             [(Hashtbl.find shape_map (string_of_expr(s1))); 
                             (Hashtbl.find shape_map (string_of_expr(s2)));
                             (Hashtbl.find shape_map n)]) in
-            build_string cmd_str (op^"f") expr;
+            ignore (build_string cmd_str (op^"f") expr);
             builder
           in
  

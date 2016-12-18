@@ -8,7 +8,7 @@ open Ast
 %token PLUS MINUS TIMES DIVIDE ASSIGN NOT
 %token UNION INTERSECT DIFFERENCE
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
-%token RETURN IF ELSE FOR WHILE BREAK
+%token RETURN IF ELSE FOR WHILE
 %token INT BOOL DBL STRING VOID
 %token SHAPE
 %token SPHERE_PRIM CUBE_PRIM CYLINDER_PRIM TETRA_PRIM CONE_PRIM
@@ -96,7 +96,6 @@ stmt:
   | FOR LPAREN expr_opt SEMI expr SEMI expr_opt RPAREN stmt
      { For($3, $5, $7, $9) }
   | WHILE LPAREN expr RPAREN stmt { While($3, $5) }
-  | BREAK SEMI { Break }
   | typ ID SEMI { Local($1, $2, Noexpr) }
   | typ ID ASSIGN expr SEMI { Local($1, $2, $4) }
 
