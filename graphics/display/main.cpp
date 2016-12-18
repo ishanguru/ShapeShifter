@@ -32,10 +32,6 @@ void check_GL_Error(const char *file, int line)
 #define CHECK_GL(func) func;
 #endif
 
-float *norms; 
-float *normws;
-float *fnorms; 
-
 static void die(const char *message) 
 {
     fprintf(stderr, "%s\n", message);
@@ -64,6 +60,12 @@ GLuint vbo; // vertex buffer object, stores triangle vertex info
 GLuint ibo; // index buffer object, stores indices of triangles
 
 float xTrans, yTrans, zTrans; 
+
+float *norms; 
+float *normws;
+float *fnorms; 
+bool drawNorms = 0;
+
 void reshape(int w, int h)
 {
     windowWidth = std::max(w, 1); 
@@ -102,6 +104,10 @@ void keyboard(unsigned char key, int x, int y)
         camZ = camR * cos(theta) * sin(phi); 
         glutPostRedisplay();
         break; 
+    case 'n': 
+        drawNorms = !drawNorms; 
+        glutPostRedisplay();
+        break; 
     default: 
         break; 
     }
@@ -137,7 +143,11 @@ void special(int key, int x, int y)
     camX = camR * cos(theta) * cos(phi);
     camY = camR * sin(theta);
     camZ = camR * cos(theta) * sin(phi); 
-  
+    if(cos(theta) < 0) 
+        upY = -1.0; 
+    else 
+        upY = 1.0; 
+ 
     glutPostRedisplay(); 
 
 }
@@ -312,7 +322,7 @@ void display()
     CHECK_GL(glEnableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glVertexPointer(3, GL_FLOAT, 0, 0)); 
     CHECK_GL(glEnableClientState(GL_NORMAL_ARRAY));
-    CHECK_GL(glNormalPointer(GL_FLOAT, 0, (char *)(shape.n_triangles*3)));
+    CHECK_GL(glNormalPointer(GL_FLOAT, 0, (char *)(shape.n_vertices*3)));
 
     //CHECK_GL(glDrawArrays(GL_TRIANGLES, 0, 3*shape.n_triangles)); 
 
@@ -321,8 +331,9 @@ void display()
 
     //CHECK_GL(glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void *)0)); 
 
+    if(drawNorms) {
     // draw normals yo
-    glLineWidth(5.0);
+    glLineWidth(3.0);
     float px, py, pz; 
     glBegin(GL_LINES);
     glColor3f(1.0, 1.0, 1.0);
@@ -349,6 +360,7 @@ void display()
     }
     glEnd();
 */
+    }
 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     CHECK_GL(glDisableClientState(GL_VERTEX_ARRAY));
@@ -454,8 +466,6 @@ int main(int argc, char **argv)
 
     loadMesh(argv[1], &shape);     
    
-    fprintf(stdout, "mesh: %d vertices, %d faces\n", shape.n_vertices, shape.n_triangles); 
-    
     uploadMeshData(); 
     glutMainLoop(); 
 }
