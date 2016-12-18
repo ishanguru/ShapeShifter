@@ -60,7 +60,7 @@ GLuint vbo; // vertex buffer object, stores triangle vertex info
 GLuint ibo; // index buffer object, stores indices of triangles
 
 // Set up lighting and material properties
-GLfloat lightPos0[] = {10.0, 10.0, 0.0, 10.0}; 
+GLfloat lightPos0[] = {0, 10.00001, 0.000001, 10.0}; 
 GLfloat lightAmb0[] = {0.1, 0.1, 0.1, 1.0}; 
 GLfloat lightDiff0[] = {1.0, 1.0, 1.0, 1.0}; 
 GLfloat lightSpec0[] = {1.0, 1.0, 1.0, 1.0}; 
@@ -68,10 +68,11 @@ GLfloat lightSpec0[] = {1.0, 1.0, 1.0, 1.0};
 
 float xTrans, yTrans, zTrans; 
 
+#if defined(debug)
 float *norms; 
-float *normws;
 float *fnorms; 
 bool drawNorms = 0;
+#endif
 
 void reshape(int w, int h)
 {
@@ -80,7 +81,7 @@ void reshape(int w, int h)
     CHECK_GL(glViewport(0, 0, windowWidth, windowHeight)); 
     CHECK_GL(glMatrixMode(GL_PROJECTION));
     CHECK_GL(glLoadIdentity()); 
-    CHECK_GL(gluPerspective(80, (GLfloat)windowWidth/windowHeight, 1, 1000));
+    CHECK_GL(gluPerspective(80, (GLfloat)windowWidth/windowHeight, .001, 1000));
     CHECK_GL(glMatrixMode(GL_MODELVIEW));   
     glutPostRedisplay();
 }
@@ -111,10 +112,12 @@ void keyboard(unsigned char key, int x, int y)
         camZ = camR * cos(theta) * sin(phi); 
         glutPostRedisplay();
         break; 
+#if defined(debug)
     case 'n': 
         drawNorms = !drawNorms; 
         glutPostRedisplay();
         break; 
+#endif
     default: 
         break; 
     }
@@ -235,10 +238,12 @@ void calcNormals(float *pos, unsigned int *ind, float *norms, int ntri, int nv)
         n1 = n1/d;
         n2 = n2/d; 
 
+#if defined(debug)
         fnorms[i*3] = n0;
         fnorms[i*3+1] = n1;
         fnorms[i*3+2] = n2; 
-     
+#endif     
+
         // weigh by angle
   
         norms[ind[i*3]*3] += n0*au;
@@ -250,7 +255,6 @@ void calcNormals(float *pos, unsigned int *ind, float *norms, int ntri, int nv)
         norms[ind[i*3+2]*3] += n0*aw;
         norms[ind[i*3+2]*3+1] += n1*aw;
         norms[ind[i*3+2]*3+2] += n2*aw;
-
     }
     
     for (int i = 0; i < nv; ++i) {
@@ -261,7 +265,6 @@ void calcNormals(float *pos, unsigned int *ind, float *norms, int ntri, int nv)
         norms[i*3] = n0/d; 
         norms[i*3+1] = n1/d;
         norms[i*3+2] = n2/d; 
-
     } 
 }
 
@@ -279,17 +282,26 @@ void uploadMeshData()
     // Upload position data
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, shape.n_vertices*3*sizeof(float), shape.vertices));
     // Calc and upload normal data 
+
+#if defined(debug)
     norms = (float *)malloc(shape.n_vertices*3*sizeof(float));
     fnorms = (float *)malloc(shape.n_triangles*3*sizeof(float));
-    normws = (float *)malloc(shape.n_vertices*sizeof(float));
-    if (!norms || !fnorms || !normws) {
+    if (!norms || !fnorms) {
         die("malloc failed");
     }
+#else
+    float *norms = (float *)malloc(shape.n_vertices*3*sizeof(float));
+    if (!norms) {
+        die("malloc failed");
+    }
+#endif
+
     memset(norms, 0, shape.n_vertices*3*sizeof(float));
-    memset(normws, 0, shape.n_vertices*sizeof(float));
     calcNormals(shape.vertices, shape.triangles, norms, shape.n_triangles, shape.n_vertices);
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.n_vertices*3*sizeof(float), norms));
-    //free(norms);
+#if !defined(debug)
+    free(norms);
+#endif
 
     CHECK_GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.n_triangles*3*sizeof(uint), shape.triangles, GL_STATIC_DRAW)); 
  
@@ -302,9 +314,11 @@ void display()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     CHECK_GL(glLightfv(GL_LIGHT0, GL_POSITION, lightPos0));   
     CHECK_GL(glEnable(GL_DEPTH_TEST));
+    CHECK_GL(glEnable(GL_NORMALIZE));
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
     CHECK_GL(gluLookAt(camX, camY, camZ, 0, 0, 0, upX, upY, upZ));
      
     // Draw axes
@@ -325,26 +339,27 @@ void display()
     CHECK_GL(glEnable(GL_LIGHTING));
     CHECK_GL(glEnable(GL_LIGHT0));
     glEnable(GL_COLOR_MATERIAL);
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-     
+    //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    //CHECK_GL(glFrontFace(GL_CW)); 
    
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, vbo)); 
     CHECK_GL(glEnableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glVertexPointer(3, GL_FLOAT, 0, 0)); 
     CHECK_GL(glEnableClientState(GL_NORMAL_ARRAY));
-    CHECK_GL(glNormalPointer(GL_FLOAT, 0, (char *)(shape.n_vertices*3)));
+    CHECK_GL(glNormalPointer(GL_FLOAT, 0, (char *)((intptr_t)(shape.n_vertices*3))));
 
 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
     CHECK_GL(glDrawElements(GL_TRIANGLES, shape.n_triangles*3, GL_UNSIGNED_INT, (void*)0));
 
+#if defined(debug)
     // draw normals yo
     if(drawNorms) {
         glLineWidth(3.0);
         float px, py, pz; 
         glBegin(GL_LINES);
         glColor3f(1.0, 1.0, 1.0);
-        for (int i = 0; i < shape.n_vertices; ++i) {
+        for (int i = 0; i < (int)shape.n_vertices; ++i) {
             px = shape.vertices[i*3]; 
             py = shape.vertices[i*3+1];
             pz = shape.vertices[i*3+2];
@@ -356,7 +371,7 @@ void display()
     // draw face normals
     glColor3f(0.0, 1.0, 1.0);
     glBegin(GL_LINES); 
-    for (int i = 0; i < shape.n_triangles; ++i) {
+    for (int i = 0; i < (int)shape.n_triangles; ++i) {
         px = shape.vertices[shape.triangles[i*3]*3];
         py = shape.vertices[shape.triangles[i*3]*3+1];
         pz = shape.vertices[shape.triangles[i*3]*3+2];
@@ -366,6 +381,7 @@ void display()
     glEnd();
 */
     }
+#endif
 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     CHECK_GL(glDisableClientState(GL_VERTEX_ARRAY));
@@ -409,7 +425,9 @@ void initOpenGLandGLUT(int argc, char **argv)
     CHECK_GL(glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb0)); 
     CHECK_GL(glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiff0)); 
     CHECK_GL(glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpec0));    
- 
+    CHECK_GL(glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER, 1));
+    CHECK_GL(glShadeModel(GL_SMOOTH));
+
     // Set camera coordinates
     double theta = camTheta*PI/180.0; 
     double phi = camPhi*PI/180.0;
