@@ -59,6 +59,13 @@ CorkTriMesh shape;
 GLuint vbo; // vertex buffer object, stores triangle vertex info
 GLuint ibo; // index buffer object, stores indices of triangles
 
+// Set up lighting and material properties
+GLfloat lightPos0[] = {10.0, 10.0, 0.0, 10.0}; 
+GLfloat lightAmb0[] = {0.1, 0.1, 0.1, 1.0}; 
+GLfloat lightDiff0[] = {1.0, 1.0, 1.0, 1.0}; 
+GLfloat lightSpec0[] = {1.0, 1.0, 1.0, 1.0}; 
+ 
+
 float xTrans, yTrans, zTrans; 
 
 float *norms; 
@@ -293,15 +300,13 @@ void uploadMeshData()
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    CHECK_GL(glEnable(GL_LIGHTING));
-    CHECK_GL(glEnable(GL_LIGHT0));
+    CHECK_GL(glLightfv(GL_LIGHT0, GL_POSITION, lightPos0));   
     CHECK_GL(glEnable(GL_DEPTH_TEST));
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     CHECK_GL(gluLookAt(camX, camY, camZ, 0, 0, 0, upX, upY, upZ));
-    //CHECK_GL(gluLookAt(camX, camY, camZ, 0, 0, 0, 0, 1, 0));
- 
+     
     // Draw axes
     glLineWidth(1.0);
     glBegin(GL_LINES);  
@@ -316,37 +321,37 @@ void display()
     glVertex3f(0.0, 0.0, 100.0); 
     glEnd(); 
     
-    glColor3f(.2, .2, .2);
-
+    glColor3f(.7, .7, .7);
+    CHECK_GL(glEnable(GL_LIGHTING));
+    CHECK_GL(glEnable(GL_LIGHT0));
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+     
+   
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, vbo)); 
     CHECK_GL(glEnableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glVertexPointer(3, GL_FLOAT, 0, 0)); 
     CHECK_GL(glEnableClientState(GL_NORMAL_ARRAY));
     CHECK_GL(glNormalPointer(GL_FLOAT, 0, (char *)(shape.n_vertices*3)));
 
-    //CHECK_GL(glDrawArrays(GL_TRIANGLES, 0, 3*shape.n_triangles)); 
 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
     CHECK_GL(glDrawElements(GL_TRIANGLES, shape.n_triangles*3, GL_UNSIGNED_INT, (void*)0));
 
-    //CHECK_GL(glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void *)0)); 
-
-    if(drawNorms) {
     // draw normals yo
-    glLineWidth(3.0);
-    float px, py, pz; 
-    glBegin(GL_LINES);
-    glColor3f(1.0, 1.0, 1.0);
-    for (int i = 0; i < shape.n_vertices; ++i) {
-        px = shape.vertices[i*3]; 
-        py = shape.vertices[i*3+1];
-        pz = shape.vertices[i*3+2];
-        glVertex3f(px, py, pz);
-        glVertex3f(px+norms[i*3], py+norms[i*3+1], pz+norms[i*3+2]);    
-        //fprintf(stdout, "(%f, %f, %f): (%f, %f, %f)\n", px, py, pz, norms[i*3], norms[i*3+1], norms[i*3+2]);
-    }
-    glEnd(); 
-
+    if(drawNorms) {
+        glLineWidth(3.0);
+        float px, py, pz; 
+        glBegin(GL_LINES);
+        glColor3f(1.0, 1.0, 1.0);
+        for (int i = 0; i < shape.n_vertices; ++i) {
+            px = shape.vertices[i*3]; 
+            py = shape.vertices[i*3+1];
+            pz = shape.vertices[i*3+2];
+            glVertex3f(px, py, pz);
+            glVertex3f(px+norms[i*3], py+norms[i*3+1], pz+norms[i*3+2]);    
+        }
+        glEnd(); 
 /*
     // draw face normals
     glColor3f(0.0, 1.0, 1.0);
@@ -397,22 +402,13 @@ void initOpenGLandGLUT(int argc, char **argv)
     glutIdleFunc(idle); 
     glutSpecialFunc(special);
 
-   // Set background color to gray
-    CHECK_GL(glClearColor(.7, .7, .7, 1.0));     
+  // Set background color to gray
+    CHECK_GL(glClearColor(.1, .1, .1, 1.0));     
 
-    // Set up lighting and material properties
-    GLfloat lightPos0[] = {0.0, 10.0, 0.0, 10.0}; 
-    GLfloat lightAmb0[] = {0.2, 0.2, 0.2, .0}; 
-    GLfloat lightDiff0[] = {1.0, 0.0, 0.0, 1.0}; 
-    GLfloat lightSpec0[] = {1.0, 0.0, 0.0, 0.0}; 
- 
     CHECK_GL(glLightfv(GL_LIGHT0, GL_POSITION, lightPos0));   
     CHECK_GL(glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb0)); 
     CHECK_GL(glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiff0)); 
     CHECK_GL(glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpec0));    
-
-    CHECK_GL(glEnable(GL_COLOR_MATERIAL));
-    CHECK_GL(glShadeModel (GL_FLAT));
  
     // Set camera coordinates
     double theta = camTheta*PI/180.0; 
