@@ -32,6 +32,10 @@ void check_GL_Error(const char *file, int line)
 #define CHECK_GL(func) func;
 #endif
 
+float *norms; 
+float *normws;
+float *fnorms; 
+
 static void die(const char *message) 
 {
     fprintf(stderr, "%s\n", message);
@@ -58,8 +62,6 @@ double upZ = 0.0;
 CorkTriMesh shape; 
 GLuint vbo; // vertex buffer object, stores triangle vertex info
 GLuint ibo; // index buffer object, stores indices of triangles
-
-float *norms; 
 
 float xTrans, yTrans, zTrans; 
 void reshape(int w, int h)
@@ -161,8 +163,10 @@ void calcNormals(float *pos, unsigned int *ind, float *norms, int ntri, int nv)
 {
     // triangle vertex positions
     float u0, u1, u2, v0, v1, v2, w0, w1, w2; 
-    float a0, a1, a2, b0, b1, b2; // edge vectors uv, uw
-    float n0, n1, n2; 
+    float a0, a1, a2, ad, b0, b1, b2, bd, c0, c1, c2, cd; // edge vectors uv, uw
+    float n0, n1, n2;
+    float d = 0; 
+    float au, av, aw; // angles 
     // For each triangle, calc normal, set for each vertex
     for(int i = 0; i < ntri; ++i) {
         u0 = pos[ind[i*3]*3];
@@ -175,31 +179,63 @@ void calcNormals(float *pos, unsigned int *ind, float *norms, int ntri, int nv)
         w1 = pos[ind[i*3+2]*3+1];
         w2 = pos[ind[i*3+2]*3+2];
         
+        // uv
         a0 = v0 - u0;
         a1 = v1 - u1;
         a2 = v2 - u2;
+        ad = std::sqrt(a0*a0 + a1*a1 + a2*a2);
+        // uw
         b0 = w0 - u0;
         b1 = w1 - u1;
         b2 = w2 - u2;
+        bd = std::sqrt(b0*b0 + b1*b1 + b2*b2);
+        // vw
+        c0 = w0 - v0;
+        c1 = w1 - v1;
+        c2 = w2 - v2; 
+        cd = std::sqrt(c0*c0 + c1*c1 + c2*c2);
+ 
+        // calc angles
+        au = std::acos((a0*b0 + a1*b1 + a2*b2)/(ad*bd)); 
+        if (au > PI/2.0) 
+            au = PI - au; 
+        av = std::acos((a0*c0 + a1*c1 + a2*c2)/(ad*cd));
+        if (av > PI/2.0) 
+            av = PI - av; 
+        aw = std::acos((b0*c0 + b1*c1 + b2*c2)/(bd*cd));
+        if (aw > PI/2.0) 
+            aw = PI - aw; 
+    
+        // calc normals
 
         n0 = a1 * b2 - a2 * b1;
         n1 = a2 * b0 - a0 * b2;
         n2 = a0 * b1 - a1 * b0;
         
         // Add normal for all 3 vertices
-        
-        norms[ind[i*3]*3] += n0;
-        norms[ind[i*3]*3+1] += n1;
-        norms[ind[i*3]*3+2] += n2;
-        norms[ind[i*3+1]*3] += n0;
-        norms[ind[i*3+1]*3+1] += n1;
-        norms[ind[i*3+1]*3+2] += n2;
-        norms[ind[i*3+2]*3] += n0;
-        norms[ind[i*3+2]*3+1] += n1;
-        norms[ind[i*3+2]*3+2] += n2;
+        d = std::max(.0001f, std::sqrt(n0*n0 + n1*n1 + n2*n2));
+        n0= n0/d; 
+        n1 = n1/d;
+        n2 = n2/d; 
+
+        fnorms[i*3] = n0;
+        fnorms[i*3+1] = n1;
+        fnorms[i*3+2] = n2; 
+     
+        // weigh by angle
+  
+        norms[ind[i*3]*3] += n0*au;
+        norms[ind[i*3]*3+1] += n1*au;
+        norms[ind[i*3]*3+2] += n2*au;
+        norms[ind[i*3+1]*3] += n0*av;
+        norms[ind[i*3+1]*3+1] += n1*av;
+        norms[ind[i*3+1]*3+2] += n2*av;
+        norms[ind[i*3+2]*3] += n0*aw;
+        norms[ind[i*3+2]*3+1] += n1*aw;
+        norms[ind[i*3+2]*3+2] += n2*aw;
+
     }
     
-    float d = 0;  
     for (int i = 0; i < nv; ++i) {
         n0 = norms[i*3]; 
         n1 = norms[i*3+1];
@@ -227,10 +263,13 @@ void uploadMeshData()
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, shape.n_vertices*3*sizeof(float), shape.vertices));
     // Calc and upload normal data 
     norms = (float *)malloc(shape.n_vertices*3*sizeof(float));
-    if (!norms) {
+    fnorms = (float *)malloc(shape.n_triangles*3*sizeof(float));
+    normws = (float *)malloc(shape.n_vertices*sizeof(float));
+    if (!norms || !fnorms || !normws) {
         die("malloc failed");
     }
     memset(norms, 0, shape.n_vertices*3*sizeof(float));
+    memset(normws, 0, shape.n_vertices*sizeof(float));
     calcNormals(shape.vertices, shape.triangles, norms, shape.n_triangles, shape.n_vertices);
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.n_vertices*3*sizeof(float), norms));
     //free(norms);
@@ -282,12 +321,11 @@ void display()
 
     //CHECK_GL(glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void *)0)); 
 
-    glColor3f(1.0, 1.0, 1.0);
-    glLineWidth(5.0);
     // draw normals yo
-    
-    glBegin(GL_LINES);
+    glLineWidth(5.0);
     float px, py, pz; 
+    glBegin(GL_LINES);
+    glColor3f(1.0, 1.0, 1.0);
     for (int i = 0; i < shape.n_vertices; ++i) {
         px = shape.vertices[i*3]; 
         py = shape.vertices[i*3+1];
@@ -297,6 +335,21 @@ void display()
         //fprintf(stdout, "(%f, %f, %f): (%f, %f, %f)\n", px, py, pz, norms[i*3], norms[i*3+1], norms[i*3+2]);
     }
     glEnd(); 
+
+/*
+    // draw face normals
+    glColor3f(0.0, 1.0, 1.0);
+    glBegin(GL_LINES); 
+    for (int i = 0; i < shape.n_triangles; ++i) {
+        px = shape.vertices[shape.triangles[i*3]*3];
+        py = shape.vertices[shape.triangles[i*3]*3+1];
+        pz = shape.vertices[shape.triangles[i*3]*3+2];
+        glVertex3f(px, py, pz);
+        glVertex3f(px+fnorms[i*3], py+fnorms[i*3+1], pz+fnorms[i*3+2]);
+    }
+    glEnd();
+*/
+
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     CHECK_GL(glDisableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glDisableClientState(GL_NORMAL_ARRAY));
@@ -385,7 +438,6 @@ void loadMesh(std::string fileName, CorkTriMesh *out)
         (out->vertices)[3*i+1] = fileMesh.vertices[i].pos.y; 
         (out->vertices)[3*i+2] = fileMesh.vertices[i].pos.z; 
     }
-
 }
 
 
@@ -402,6 +454,8 @@ int main(int argc, char **argv)
 
     loadMesh(argv[1], &shape);     
    
+    fprintf(stdout, "mesh: %d vertices, %d faces\n", shape.n_vertices, shape.n_triangles); 
+    
     uploadMeshData(); 
     glutMainLoop(); 
 }
