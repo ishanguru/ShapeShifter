@@ -1,0 +1,11 @@
+// Reflect a tetra
+
+void scene() {
+    Shape tet;
+
+    tet = TETRA;
+
+    Reflect(tet, 0.0, 1.0, 0.0);
+    Render(tet);
+}
+

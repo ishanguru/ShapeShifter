@@ -1,0 +1,11 @@
+// Scale a tetra
+
+void scene() {
+    Shape tet;
+
+    tet = TETRA;
+
+    Scale(tet, 0.0, 1.0, 0.0);
+    Render(tet);
+}
+
