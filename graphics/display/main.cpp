@@ -60,7 +60,7 @@ GLuint vbo; // vertex buffer object, stores triangle vertex info
 GLuint ibo; // index buffer object, stores indices of triangles
 
 // Set up lighting and material properties
-GLfloat lightPos0[] = {10.00001, 10.00001, 0.000001, 10.0}; 
+GLfloat lightPos0[] = {0, 10.00001, 0.000001, 10.0}; 
 GLfloat lightAmb0[] = {0.1, 0.1, 0.1, 1.0}; 
 GLfloat lightDiff0[] = {1.0, 1.0, 1.0, 1.0}; 
 GLfloat lightSpec0[] = {1.0, 1.0, 1.0, 1.0}; 
@@ -314,10 +314,11 @@ void display()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     CHECK_GL(glLightfv(GL_LIGHT0, GL_POSITION, lightPos0));   
     CHECK_GL(glEnable(GL_DEPTH_TEST));
-    //CHECK_GL(glEnable(GL_NORMALIZE));
+    CHECK_GL(glEnable(GL_NORMALIZE));
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
     CHECK_GL(gluLookAt(camX, camY, camZ, 0, 0, 0, upX, upY, upZ));
      
     // Draw axes
@@ -338,7 +339,7 @@ void display()
     CHECK_GL(glEnable(GL_LIGHTING));
     CHECK_GL(glEnable(GL_LIGHT0));
     glEnable(GL_COLOR_MATERIAL);
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     //CHECK_GL(glFrontFace(GL_CW)); 
    
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, vbo)); 
@@ -424,7 +425,7 @@ void initOpenGLandGLUT(int argc, char **argv)
     CHECK_GL(glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb0)); 
     CHECK_GL(glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiff0)); 
     CHECK_GL(glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpec0));    
-
+    CHECK_GL(glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER, 1));
     CHECK_GL(glShadeModel(GL_SMOOTH));
 
     // Set camera coordinates
