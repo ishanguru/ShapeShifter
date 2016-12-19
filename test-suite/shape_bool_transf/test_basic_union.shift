@@ -1,8 +1,8 @@
 // Union 2 spheres
 
-void scene() {
+int scene() {
     Shape sph1;
-    Sphere sph2;
+    Shape sph2;
     Shape sphu;
 
     sph1 = SPHERE; 
@@ -12,6 +12,7 @@ void scene() {
     Translate(sph2, 0.0, -0.5, 0.0);
 
     sphu = Union(sph1, sph2);
+    print("Basic union works.");
 
 }
 

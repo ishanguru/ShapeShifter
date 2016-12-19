@@ -1,7 +1,7 @@
 
 // Translate, rotate, scale a sphere 
 
-void scene() {
+int scene() {
     Shape sph;
     sph = SPHERE; 
     Scale(sph, 2.0, 1.0, 1.5); 

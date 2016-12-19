@@ -1,0 +1,11 @@
+int scene() {
+    int x = 20;
+    int y = 20;
+    int z = 1;
+    if(x <= y) {
+        print(x);
+    }
+    else {
+        print(y);
+    }
+}
