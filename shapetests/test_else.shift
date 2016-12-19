@@ -1,0 +1,10 @@
+int scene() {
+    int x = 5;
+    int y = -7;
+    if(x < -7) {
+        print("Failed");
+    }
+    else {
+        print("Else works");
+    }
+}

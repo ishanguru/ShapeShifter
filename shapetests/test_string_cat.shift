@@ -1,0 +1,6 @@
+int scene() {
+    string greet = "Hi ";
+    string name = "John";
+    string greeting = greet + name;
+    print(greeting);
+}

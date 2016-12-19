@@ -1,0 +1,8 @@
+void sayHi() {
+    print("Hi ");
+}
+
+int scene() {
+    sayHi();
+    print("Mr.Edwards");
+}
