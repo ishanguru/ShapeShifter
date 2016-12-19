@@ -282,7 +282,25 @@ let translate (globals, functions) =
           (* | _ -> raise (Failure "Unop not supported")) e' "tmp" builder *)
      
       | A.Assign (s, e) -> 
-        (* Ugh shapes or something *)
+        let make_prim_cmd p n =
+        ( 
+          let prim_cmd = get_cork_cmd "Save" (String.concat " "
+                            [(get_prim_file p); 
+                            (Hashtbl.find shape_map n)]) in
+          ignore (build_string prim_cmd ((string_of_expr p )^"f") expr);
+          L.const_int i32_t 0  
+        )
+        in   
+ 
+        let make_boolop_cmd op s1 s2 n = 
+          let cmd_str = get_cork_cmd op (String.concat " " 
+                            [(Hashtbl.find shape_map (string_of_expr(s1))); 
+                            (Hashtbl.find shape_map (string_of_expr(s2)));
+                            (Hashtbl.find shape_map n)]) in
+           ignore (build_string cmd_str (op^"f") expr);
+           L.const_int i32_t 0
+        in
+
         (match e with 
           A.Id id ->  
             let var_type = lookup_type id in
@@ -294,7 +312,30 @@ let translate (globals, functions) =
             | _ -> 
               let e' = expr builder e in
               ignore (L.build_store e' (lookup s) builder); e'
-            )  
+            )
+          (* Call primitive constructors *)
+          | A.ConePrim        ->
+            make_prim_cmd A.ConePrim s
+          | A.CubePrim        ->
+            make_prim_cmd A.CubePrim s
+          | A.CylinderPrim    -> 
+            make_prim_cmd A.CylinderPrim s
+          | A.SpherePrim      ->
+            make_prim_cmd A.SpherePrim s
+          | A.TetraPrim       -> 
+            make_prim_cmd A.TetraPrim s
+          (* Boolean shape operations create a new shape*)
+          | A.Call ("Union", [s1; s2]) -> 
+            make_boolop_cmd "Union" s1 s2 s
+          | A.Call ("Intersect", [s1; s2]) ->
+            make_boolop_cmd "Intersect" s1 s2 s 
+          | A.Call ("Difference", [s1; s2]) -> 
+            make_boolop_cmd "Difference" s1 s2 s
+          | A.Call ("Xor", [s1; s2]) -> 
+            make_boolop_cmd "Xor" s1 s2 s
+    (*
+              | A.Call (f, act) ->
+ *)
           | _ ->  
             let e' = expr builder e in
             ignore (L.build_store e' (lookup s) builder); e'
@@ -468,8 +509,19 @@ let translate (globals, functions) =
               make_boolop_cmd "Difference" s1 s2 n
             | A.Call ("Xor", [s1; s2]) -> 
               make_boolop_cmd "Xor" s1 s2 n
-            | A.Noexpr -> builder
-        
+            | A.Call (f, act) ->
+                (*
+              let (fdef, fdecl) = StringMap.find f function_decls in
+	 	      let actuals = List.rev (List.map (expr builder) (List.rev act)) in
+	 	      let result = (match fdecl.A.typ with A.Void -> ""
+                                            | _ -> f ^ "_result") in
+              L.build_call fdef (Array.of_list actuals) result builder
+                *)
+              print_string("sad");
+              let e' = expr builder e in
+              ignore (L.build_store e' (lookup n) builder);
+              builder
+            | A.Noexpr -> builder 
             | A.Id id->
               let variable_type = lookup_type id in
               (match variable_type with 

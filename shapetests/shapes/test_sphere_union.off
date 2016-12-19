@@ -1,0 +1,10 @@
+
+int scene() {
+    Shape step; 
+    step = SPHERE;
+    Translate(step, 0.5, 0.0, 0.0); 
+    Shape s2 = SPHERE; 
+    Shape s = Union(step, s2); 
+    
+    Render(s); 
+}
