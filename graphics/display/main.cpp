@@ -60,7 +60,7 @@ GLuint vbo; // vertex buffer object, stores triangle vertex info
 GLuint ibo; // index buffer object, stores indices of triangles
 
 // Set up lighting and material properties
-GLfloat lightPos0[] = {0, 10.00001, 0.000001, 10.0}; 
+GLfloat lightPos0[] = {10.000001, 10.00001, 0.000001, 10.0}; 
 GLfloat lightAmb0[] = {0.1, 0.1, 0.1, 1.0}; 
 GLfloat lightDiff0[] = {1.0, 1.0, 1.0, 1.0}; 
 GLfloat lightSpec0[] = {1.0, 1.0, 1.0, 1.0}; 
@@ -273,6 +273,8 @@ void calcNormals(float *pos, unsigned int *ind, float *norms, int ntri, int nv)
 void calcCols(float *cols, int n) 
 {
     float colors[][3] = {{.43, .72, .94}, {0.21, .60, 0.82}, {0.51, 0.91, .96}};
+    //float colors[][3] = {{.43, .72, .94}, {0.43, .72, 0.94}, {0.43, 0.72, .94}};
+ 
     for (int i = 0; i < n; ++i) {
         cols[i*3] = colors[i%3][0];
         cols[i*3+1] = colors[i%3][1];
