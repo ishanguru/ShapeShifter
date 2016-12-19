@@ -23,6 +23,8 @@ let local_vars:(string, L.llvalue) Hashtbl.t = Hashtbl.create 50
 let type_map:(string, A.typ) Hashtbl.t = Hashtbl.create 50
 (* Store the underlying filenames for each shape *)
 let shape_map:(string, string) Hashtbl.t = Hashtbl.create 50
+let shstr_map:(string, L.llvalue) Hashtbl.t = Hashtbl.create 50
+
 
 let translate (globals, functions) =
   let context = L.global_context () in
@@ -43,7 +45,7 @@ let translate (globals, functions) =
     | A.Void -> void_t
     | A.String -> i8_pt 
     | A.Dbl -> double_t
-    | A.Shape -> i32_t (*Make Shape an int just to be able to test translate *)  in
+    | A.Shape -> i8_pt (*Make Shape an int just to be able to test translate *)  in
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars =
@@ -57,6 +59,8 @@ let translate (globals, functions) =
   let system_func = L.declare_function "system" system_t the_module in
 
   (* Declare Shapeshifter functions (need to finish enumerating) *)
+
+  let shflen = 11 in (* fixed-size shape file string length *)
 
   (* Declare printf(), which the print built-in function will call *)
   let printf_t = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
@@ -120,9 +124,13 @@ let translate (globals, functions) =
     (* Create a temp file for each shape from random int; collisions not checked but unlikely yolo *)
     let add_shape_type ty na= 
       match ty with 
-      A.Shape ->              
-        let shape_file = tmp_folder ^ string_of_int(Random.int 100000000) ^ ".off" in 
+      A.Shape ->             
+        let shnum = string_of_int(Random.int 100000000) in
+        let pad0 = String.make (shflen - String.length shnum) '0' in
+        let shape_file = tmp_folder ^ (pad0) ^ shnum ^ ".off" in 
         ignore (Hashtbl.add shape_map na shape_file);
+        ignore (Hashtbl.add shstr_map na (L.build_global_stringptr shape_file na builder));
+ 
       | _ -> () in
 
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
@@ -229,7 +237,7 @@ let translate (globals, functions) =
       
       | A.StrLit s -> L.build_global_stringptr s "" builder
 	  
-	 | A.IntLit i -> L.const_int i32_t i
+	  | A.IntLit i -> L.const_int i32_t i
         
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       
@@ -288,7 +296,8 @@ let translate (globals, functions) =
                             [(get_prim_file p); 
                             (Hashtbl.find shape_map n)]) in
           ignore (build_string prim_cmd ((string_of_expr p )^"f") expr);
-          L.const_int i32_t 0  
+          (*Hashtbl.find shstr_map n*)
+          L.const_int i32_t 0
         )
         in   
  
@@ -298,7 +307,8 @@ let translate (globals, functions) =
                             (Hashtbl.find shape_map (string_of_expr(s2)));
                             (Hashtbl.find shape_map n)]) in
            ignore (build_string cmd_str (op^"f") expr);
-           L.const_int i32_t 0
+           (*Hashtbl.find shstr_map n*)
+           L.const_int i32_t 0   
         in
 
         (match e with 
@@ -309,6 +319,7 @@ let translate (globals, functions) =
               let sf = Hashtbl.find shape_map id in
               ignore (Hashtbl.add shape_map s sf);
               L.const_int i32_t 0
+              (*Hashtbl.find shstr_map s *)
             | _ -> 
               let e' = expr builder e in
               ignore (L.build_store e' (lookup s) builder); e'
@@ -343,10 +354,10 @@ let translate (globals, functions) =
      
       | A.Call ("print", [e]) ->
         let print_strlit s =
-        let string_head = expr builder (s) in
-        let zero_const = L.const_int i32_t 0 in
-        let str = L.build_in_bounds_gep string_head [| zero_const |] "str_printf" builder in
-        L.build_call printf_func [| str |] "str_printf" builder in  
+          let string_head = expr builder (s) in
+          let zero_const = L.const_int i32_t 0 in
+          let str = L.build_in_bounds_gep string_head [| zero_const |] "str_printf" builder in
+          L.build_call printf_func [| str |] "str_printf" builder in  
 
   	    (match List.hd[e] with 
   		  | A.StrLit _ ->
@@ -468,7 +479,26 @@ let translate (globals, functions) =
           ignore (Hashtbl.add type_map n t);
 
           add_shape_type t n;  
-            
+
+(*
+          let build_string2 sp s n expr = 
+	        let string_head = expr builder (A.StrLit s) in 
+            let zero_const = L.const_int i32_t 0 in
+            let str = L.build_in_bounds_gep string_head [| zero_const |] (n^"_str") builder in
+            let ip = L.const_in_bounds_gep
+            L.build_store 
+            L.build_call system_func [| str |] n builder
+          in
+
+          let make_prim_cmd p n =
+            ( 
+              let prim_cmd = get_cork_cmd "Save" (get_prim_file p) in
+              ignore (build_string2 n prim_cmd ((string_of_expr p )^"f") expr);
+              builder 
+            )
+          in   
+  *)     
+                      
           let make_prim_cmd p n =
             ( 
               let prim_cmd = get_cork_cmd "Save" (String.concat " "
@@ -478,7 +508,8 @@ let translate (globals, functions) =
               builder 
             )
           in   
- 
+           
+
           let make_boolop_cmd op s1 s2 n = 
             let cmd_str = get_cork_cmd op (String.concat " " 
                             [(Hashtbl.find shape_map (string_of_expr(s1))); 
@@ -509,6 +540,7 @@ let translate (globals, functions) =
               make_boolop_cmd "Difference" s1 s2 n
             | A.Call ("Xor", [s1; s2]) -> 
               make_boolop_cmd "Xor" s1 s2 n
+(*
             | A.Call (f, act) ->
                 (*
               let (fdef, fdecl) = StringMap.find f function_decls in
@@ -521,6 +553,7 @@ let translate (globals, functions) =
               let e' = expr builder e in
               ignore (L.build_store e' (lookup n) builder);
               builder
+  *)
             | A.Noexpr -> builder 
             | A.Id id->
               let variable_type = lookup_type id in
@@ -529,6 +562,8 @@ let translate (globals, functions) =
                   (* Set both shapes to have same file representation *)
                   let sf = Hashtbl.find shape_map id in
                   ignore (Hashtbl.add shape_map n sf);
+                  let e' = expr builder e in 
+                  ignore (L.build_store e' (lookup n) builder); 
                   builder
                 | _ -> 
                   let e' = expr builder e in 
