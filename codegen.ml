@@ -100,6 +100,7 @@ let translate (globals, functions) =
           | "Difference"      -> cork_exec ^ " -diff"
           | "Intersect"       -> cork_exec ^ " -isct"
           | "Save"            -> "cp"
+          | "Copy"            -> "cp"
           | "Render"          -> render_exec
           | "Xor"         -> cork_exec ^ " -xor"
           | _ -> raise (Failure "Incorrect cork_cmd")
@@ -410,6 +411,12 @@ let translate (globals, functions) =
                             [(Hashtbl.find shape_map (string_of_expr(s)));  
                             string_of_expr(n)]) in  
         build_string save_cmd "savef" expr; 
+      | A.Call ("Copy", [s1; s2]) -> 
+        let copy_cmd = get_cork_cmd "Copy" (String.concat " " 
+                            [(Hashtbl.find shape_map (string_of_expr(s1)));
+                            (Hashtbl.find shape_map (string_of_expr(s2)));]) in  
+        build_string copy_cmd "copyf" expr; 
+ 
       | A.Call ("Render", [s]) -> 
         let rend_cmd = get_cork_cmd "Render" (Hashtbl.find shape_map (string_of_expr(s))) in
         build_string rend_cmd "rendf" expr; 
