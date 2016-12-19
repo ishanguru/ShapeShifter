@@ -1,7 +1,7 @@
 // Initialize a sphere
 
-void scene() {
-	Shape sph;
+int scene() {
+    Shape sph;
     Shape sph2;
     sph = SPHERE; 
     sph2 = SPHERE; 

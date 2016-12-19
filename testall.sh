@@ -162,7 +162,7 @@ if [ $# -ge 1 ]
 then
     files=$@
 else
-    files="test-suite/shapes/test_*.shift test-suite/shapes/fail_*.shift test-suite/arithmetic/test_*.shift test-suite/control_flow/test_*.shift test-suite/shape_bool_transf/test_*.shift test-suite/bool_ops/test_*.shift test-suite/data_types/test_*.shift test-suite/misc/test_*.shift test-suite/misc/fail_*.shift test-suite/comp_ops/test_*.shift test-suite/functions/test_*.shift test-suite/shapes_transf/test_*.shift"
+    files="test-suite/shapes/test_*.shift test-suite/arithmetic/test_*.shift test-suite/control_flow/test_*.shift test-suite/shape_bool_transf/test_*.shift test-suite/bool_ops/test_*.shift test-suite/data_types/test_*.shift test-suite/misc/fail_*.shift test-suite/comp_ops/test_*.shift test-suite/functions/test_*.shift test-suite/shape_transf/test_*.shift"
 fi
 
 for file in $files

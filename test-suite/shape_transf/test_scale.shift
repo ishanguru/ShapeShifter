@@ -1,11 +1,12 @@
 // Scale a tetra
 
-void scene() {
+int scene() {
     Shape tet;
 
     tet = TETRA;
 
     Scale(tet, 0.0, 1.0, 0.0);
-    Render(tet);
+    // Render(tet);
+    print("A tetra was scaled.");
 }
 

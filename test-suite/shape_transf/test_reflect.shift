@@ -1,11 +1,12 @@
 // Reflect a tetra
 
-void scene() {
+int scene() {
     Shape tet;
 
     tet = TETRA;
 
     Reflect(tet, 0.0, 1.0, 0.0);
-    Render(tet);
+    // Render(tet);
+    print("A tetra was reflected.");
 }
 

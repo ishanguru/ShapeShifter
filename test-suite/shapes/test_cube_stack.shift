@@ -11,6 +11,6 @@ int scene() {
     Shape su = Union(s, s2); 
     Translate(su, 0.0, 1.0, 0.0);
 
-    Render(su); 
+    // Render(su); 
     print("Cubes are created, and then stacked.");
 }

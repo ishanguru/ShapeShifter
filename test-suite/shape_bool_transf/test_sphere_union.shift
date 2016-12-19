@@ -6,5 +6,6 @@ int scene() {
     Shape s2 = SPHERE; 
     Shape s = Union(step, s2); 
     
-    Render(s); 
+    // Render(s);
+    print("Union over two spheres!");  
 }
