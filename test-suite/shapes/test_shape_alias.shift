@@ -7,4 +7,5 @@ int scene() {
     Shape s2 = step;
     
     Render(s2);
+    print("Create an alias for a shape: check!");
 }
