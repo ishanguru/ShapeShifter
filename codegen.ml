@@ -236,13 +236,12 @@ let translate (globals, functions) =
       | A.Noexpr -> L.const_int i32_t 0
      
       | A.Id s -> L.build_load (lookup s) s builder
-
       | A.Binop (e1, op, e2) ->
 	    let e1' = expr builder e1
 	    and e2' = expr builder e2 in
 
 	    (match e1 with 
-    	    | A.IntLit _ -> (integer_ops op) e1' e2' "tmp" builder
+    	  | A.IntLit _ -> (integer_ops op) e1' e2' "tmp" builder
           | A.DblLit _ -> (double_ops op) e1' e2' "tmp" builder
           | A.Id id ->  
           (* We need to match with each type that ID can take, use StringMap for storing types *)
@@ -282,8 +281,24 @@ let translate (globals, functions) =
           | A.Not     -> L.build_not) e' "tmp" builder
           (* | _ -> raise (Failure "Unop not supported")) e' "tmp" builder *)
      
-      | A.Assign (s, e) -> let e' = expr builder e in
-        ignore (L.build_store e' (lookup s) builder); e'
+      | A.Assign (s, e) -> 
+        (* Ugh shapes or something *)
+        (match e with 
+          A.Id id ->  
+            let var_type = lookup_type id in
+            (match var_type with    
+            A.Shape -> 
+              let sf = Hashtbl.find shape_map id in
+              ignore (Hashtbl.add shape_map s sf);
+              L.const_int i32_t 0
+            | _ -> 
+              let e' = expr builder e in
+              ignore (L.build_store e' (lookup s) builder); e'
+            )  
+          | _ ->  
+            let e' = expr builder e in
+            ignore (L.build_store e' (lookup s) builder); e'
+        )
      
       | A.Call ("print", [e]) ->
         let print_strlit s =
@@ -454,6 +469,24 @@ let translate (globals, functions) =
             | A.Call ("Xor", [s1; s2]) -> 
               make_boolop_cmd "Xor" s1 s2 n
             | A.Noexpr -> builder
+        (*
+            | A.Id id->
+              print_string("waitwhat"); 
+              let variable_type = lookup_type id in
+              (match variable_type with 
+                A.Shape -> 
+                  (* Set both shapes to have same file representation *)
+                  let sf = Hashtbl.find shape_map id in
+                  ignore (Hashtbl.add shape_map n sf);
+                  print_string(sf);
+                  builder
+                | _ -> 
+                  print_string("uncool");
+                  let e' = expr builder e in 
+                  ignore (L.build_store e' (lookup n) builder); 
+                  builder
+              ) 
+        *)
             | _ -> 
               let e' = expr builder e in
               ignore (L.build_store e' (lookup n) builder);

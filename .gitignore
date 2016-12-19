@@ -9,4 +9,5 @@ graphics/sstools
 *.log
 *.err
 shapeshifter.native
+shapeshifter
 .tmp/*.off
