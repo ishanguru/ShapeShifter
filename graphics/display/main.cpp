@@ -268,6 +268,19 @@ void calcNormals(float *pos, unsigned int *ind, float *norms, int ntri, int nv)
     } 
 }
 
+
+
+void calcCols(float *cols, int n) 
+{
+    float colors[][3] = {{.43, .72, .94}, {0.21, .60, 0.82}, {0.51, 0.91, .96}};
+    for (int i = 0; i < n; ++i) {
+        cols[i*3] = colors[i%3][0];
+        cols[i*3+1] = colors[i%3][1];
+        cols[i*3+2] = colors[i%3][2];
+    }
+}
+
+
 void uploadMeshData()
 {
     CHECK_GL(glGenBuffers(1, &vbo)); 
@@ -278,7 +291,7 @@ void uploadMeshData()
     //CHECK_GL(glBufferData(GL_ARRAY_BUFFER, shape.n_vertices*3*sizeof(float), shape.vertices, GL_STATIC_DRAW));
 
     // Allocate enough buffer space for positions + normals
-    CHECK_GL(glBufferData(GL_ARRAY_BUFFER, shape.n_vertices*6*sizeof(float), 0, GL_STATIC_DRAW));
+    CHECK_GL(glBufferData(GL_ARRAY_BUFFER, shape.n_vertices*9*sizeof(float), 0, GL_STATIC_DRAW));
     // Upload position data
     CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, 0, shape.n_vertices*3*sizeof(float), shape.vertices));
     // Calc and upload normal data 
@@ -302,6 +315,11 @@ void uploadMeshData()
 #if !defined(debug)
     free(norms);
 #endif
+
+    float *cols = (float *)malloc(shape.n_vertices*3*sizeof(float));
+    calcCols(cols, shape.n_vertices);
+    CHECK_GL(glBufferSubData(GL_ARRAY_BUFFER, shape.n_vertices*6*sizeof(float), shape.n_vertices*3*sizeof(float), cols));
+    free(cols);
 
     CHECK_GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.n_triangles*3*sizeof(uint), shape.triangles, GL_STATIC_DRAW)); 
  
@@ -346,8 +364,9 @@ void display()
     CHECK_GL(glEnableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glVertexPointer(3, GL_FLOAT, 0, 0)); 
     CHECK_GL(glEnableClientState(GL_NORMAL_ARRAY));
-    CHECK_GL(glNormalPointer(GL_FLOAT, 0, (char *)((intptr_t)(shape.n_vertices*3))));
-
+    CHECK_GL(glEnableClientState(GL_COLOR_ARRAY));
+    CHECK_GL(glNormalPointer(GL_FLOAT, 0, (char *)((intptr_t)(shape.n_vertices*3*sizeof(float)))));
+    CHECK_GL(glColorPointer(3, GL_FLOAT, 0, (char *)((intptr_t)(shape.n_vertices*6*sizeof(float)))));
 
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
     CHECK_GL(glDrawElements(GL_TRIANGLES, shape.n_triangles*3, GL_UNSIGNED_INT, (void*)0));
@@ -386,6 +405,7 @@ void display()
     CHECK_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     CHECK_GL(glDisableClientState(GL_VERTEX_ARRAY));
     CHECK_GL(glDisableClientState(GL_NORMAL_ARRAY));
+    CHECK_GL(glDisableClientState(GL_COLOR_ARRAY));
     CHECK_GL(glBindBuffer(GL_ARRAY_BUFFER, 0)); 
 
     CHECK_GL(glDisable(GL_LIGHTING));
