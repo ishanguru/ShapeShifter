@@ -1,0 +1,12 @@
+
+int scene() {
+
+Shape s = SPHERE;
+
+Translate(s, 1.0+2.0, -1.0, 0.0); 
+
+Render(s); 
+
+print("Renders a sphere."); 
+
+}

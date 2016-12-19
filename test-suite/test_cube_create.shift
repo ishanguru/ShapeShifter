@@ -1,0 +1,11 @@
+
+int scene() {
+
+Shape s = CUBE;
+
+Translate(s, 1.0+2.0, -1.0, 0.0); 
+
+Render(s); 
+
+print("Renders a cube."); 
+}
