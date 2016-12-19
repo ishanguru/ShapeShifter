@@ -17,7 +17,7 @@ SHAPE="./shapeshifter"
 # Set time limit for all operations
 ulimit -t 30
 
-globallog=testall.log
+globallog=sandbox.log
 rm -f $globallog
 error=0
 globalerror=0
@@ -162,7 +162,7 @@ if [ $# -ge 1 ]
 then
     files=$@
 else
-    files="test-suite/shapes/test_*.shift test-suite/arithmetic/test_*.shift test-suite/control_flow/test_*.shift test-suite/shape_bool_transf/test_*.shift test-suite/data_types/test_*.shift test-suite/misc/fail_*.shift test-suite/comp_ops/test_*.shift test-suite/functions/test_*.shift test-suite/shape_transf/test_*.shift"
+    files="test-suite/sandbox/test_*.shift test-suite/sandbox/fail_*.shift"
 fi
 
 for file in $files
