@@ -12,5 +12,5 @@ int scene() {
     Translate(su, 0.0, 1.0, 0.0);
 
     Render(su); 
-    Save(su, "thing.off");
+    print("Cubes are created, and then stacked.");
 }

@@ -5,4 +5,6 @@ void scene() {
     Shape cy2;
     cyl = CYLINDER; 
     cy2 = CYLINDER;
+
+    print("Cylinders were created!");
 }

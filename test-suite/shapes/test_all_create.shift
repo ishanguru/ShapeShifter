@@ -7,6 +7,8 @@ Shape cyl = CYLINDER;
 Shape sph = SPHERE; 
 Shape tet = TETRA; 
 
+print("All shapes can be created.");
+
 }
 
 
