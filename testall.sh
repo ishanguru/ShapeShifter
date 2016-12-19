@@ -162,7 +162,7 @@ if [ $# -ge 1 ]
 then
     files=$@
 else
-    files="shapetests/test_*.shift shapetests/fail_*.shift"
+    files="test-suite/test_*.shift test-suite/fail_*.shift test-suite/shapes/test_*.shift test-suite/shapes/fail_*.shift"
 fi
 
 for file in $files
