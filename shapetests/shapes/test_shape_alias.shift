@@ -1,18 +1,10 @@
-/*
-Shape makeStep(double w, double h, double l, double angle) {
-    Shape s = CUBE; 
-    return s; 
-}
-*/
 
 int scene() {
     
-    //Shape step = makeStep(1.0, 0.1, 4.0, 0.0); 
     Shape step; 
     Shape s = CUBE; 
     step = s;
-    //step = CUBE; 
-
-    Render(step); 
-    //Save(step, "thing.off");
+    Shape s2 = step;
+    
+    Render(s2);
 }

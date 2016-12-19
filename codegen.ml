@@ -469,24 +469,20 @@ let translate (globals, functions) =
             | A.Call ("Xor", [s1; s2]) -> 
               make_boolop_cmd "Xor" s1 s2 n
             | A.Noexpr -> builder
-        (*
+        
             | A.Id id->
-              print_string("waitwhat"); 
               let variable_type = lookup_type id in
               (match variable_type with 
                 A.Shape -> 
                   (* Set both shapes to have same file representation *)
                   let sf = Hashtbl.find shape_map id in
                   ignore (Hashtbl.add shape_map n sf);
-                  print_string(sf);
                   builder
                 | _ -> 
-                  print_string("uncool");
                   let e' = expr builder e in 
                   ignore (L.build_store e' (lookup n) builder); 
                   builder
-              ) 
-        *)
+              )  
             | _ -> 
               let e' = expr builder e in
               ignore (L.build_store e' (lookup n) builder);
