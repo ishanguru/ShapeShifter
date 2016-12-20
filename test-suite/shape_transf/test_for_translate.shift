@@ -1,0 +1,16 @@
+// Translate a tetra in a for loop
+
+int scene() {
+    Shape tet;
+
+    tet = TETRA;
+
+    for (i=1.0; i<5.0; i=i+1.0) {
+
+    Translate(tet, 0.0, i, 0.0);
+
+    }
+
+    print("A tetra was translated.");
+    
+}

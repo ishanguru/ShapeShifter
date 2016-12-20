@@ -1,0 +1,20 @@
+// Translate a tetra in a while loop
+
+int scene() {
+
+    Shape tet;
+    tet = TETRA;
+
+    int i;
+    i = 1; 
+
+    while (i < 5) {
+
+    	Translate(tet, 0.0, i, 0.0);
+    	i = i + 1;
+
+    }
+
+    print("A tetra was translated.");
+    
+}

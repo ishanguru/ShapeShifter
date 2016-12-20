@@ -1,0 +1,17 @@
+// Translate a tetra
+
+int scene() {
+    Shape tet;
+
+    tet = TETRA;
+
+    Translate(tet, 0.0, 1.0, 0.0);
+    print("Move up a bit.");
+
+    Translate(tet, 0.0, 1.0, 0.0);
+    print("A bit more!");
+
+    Translate(tet, 0.0, 1.0, 0.0);
+    print("Okay.");
+
+}
