@@ -1,0 +1,28 @@
+// Union multiple spheres
+
+int scene() {
+    Shape sph1;
+    Shape sph2;
+    Shape sphu;
+
+    Shape sph3;
+    Shape sph4;
+    Shape sphu2;
+
+    Shape sphu3;
+
+    sph1 = SPHERE; 
+    sph2 = SPHERE; 
+
+    Translate(sph3, 0.5, 0.0, 0.0);
+    Translate(sph4, -0.5, 0.0, 0.0);
+
+    sphu = Union(sph1, sph2);
+
+    sphu2 = Union(sph3, sph4);
+
+    sph3 = Union(sphu, sphu2);
+
+    print("Multiple unions work!");
+
+}
