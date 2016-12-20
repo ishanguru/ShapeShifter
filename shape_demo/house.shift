@@ -1,0 +1,10 @@
+int scene() {
+    Shape base = CUBE; 
+    Shape roof = CUBE;    
+
+    //Copy(roof, base);
+    Rotate(roof, 45, 45, 45);
+    Translate(roof, 0.0, 1.0, 0.0);
+    Shape house = Union(base, roof);
+    Render(roof);
+}

@@ -1,0 +1,15 @@
+
+int scene() {
+
+    Shape s;
+    int i = 0; 
+    if (i > 1) {
+        s = CUBE; 
+    }
+    else {
+        s = SPHERE; 
+
+    }
+    Render(s);
+
+}
