@@ -1,7 +1,0 @@
-
-
-Really we'll want to add something to our codegen that creates this 
-temporary folder at the start of the program running, and then
-deletes it at the end. 
-
-For now though just make sure it exists.

@@ -84,7 +84,22 @@ let translate (globals, functions) =
     let (the_function, _) = StringMap.find name function_decls in
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
-    (* Declare the strings we need *)
+    let tmp_folder = "./.tmp/" in
+    
+    let make_tmp_cmd = "mkdir -p "^tmp_folder in
+    (* Add mkdir command here if name = "main" *)
+    let make_temp_dir =  
+    (match name with
+      "main" ->     
+	    let string_head = L.build_global_stringptr make_tmp_cmd "" builder in 
+        let zero_const = L.const_int i32_t 0 in
+        let str = L.build_in_bounds_gep string_head [| zero_const |] "" builder in
+        ignore(L.build_call system_func [| str |] "mkdir_tmpf" builder);
+      | _ -> ()
+    ) in
+    make_temp_dir; 
+    
+
     (* Cork executable and commands *)
     let get_cork_cmd func args =  
       let cork_exec = "./graphics/cork/bin/cork" 
@@ -120,8 +135,6 @@ let translate (globals, functions) =
         | _ -> raise (Failure "Shape file for specified primitive not found")
     in
     
-    let tmp_folder = "./.tmp/" in
-
     (* Create a temp file for each shape from random int; collisions not checked but unlikely yolo *)
     let add_shape_type ty na= 
       match ty with 
@@ -585,6 +598,8 @@ let translate (globals, functions) =
 
     (* Build the code for each statement in the function *)
     let builder = stmt builder (A.Block fdecl.A.body) in
+
+    (* Add rm -rf .tmp command if name = main*)
 
     (* Add a return if the last block falls off the end *)
     add_terminal builder (match fdecl.A.typ with
