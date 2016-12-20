@@ -7,7 +7,7 @@ Core functionality:
 
 
 Nice to have: 
-- Make .tmp directory on program start, delete it at the end
++ Make .tmp directory on program start, delete it at the end
 - Sine/cosine/rand... particularly rand... 
 - Remove the need for int from scene... We don't return anything :(
 - Expanded semantic analysis

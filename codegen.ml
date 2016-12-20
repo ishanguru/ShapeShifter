@@ -87,8 +87,9 @@ let translate (globals, functions) =
     let tmp_folder = "./.tmp/" in
     
     let make_tmp_cmd = "mkdir -p "^tmp_folder in
-    (* Add mkdir command here if name = "main" *)
+    let rm_tmp_cmd = "rm -rf "^tmp_folder in (* Wow is this command dangerous ;) *)
     let make_temp_dir =  
+    (* Add mkdir command here if name = "main" *)
     (match name with
       "main" ->     
 	    let string_head = L.build_global_stringptr make_tmp_cmd "" builder in 
@@ -97,8 +98,7 @@ let translate (globals, functions) =
         ignore(L.build_call system_func [| str |] "mkdir_tmpf" builder);
       | _ -> ()
     ) in
-    make_temp_dir; 
-    
+    make_temp_dir;  
 
     (* Cork executable and commands *)
     let get_cork_cmd func args =  
@@ -600,6 +600,16 @@ let translate (globals, functions) =
     let builder = stmt builder (A.Block fdecl.A.body) in
 
     (* Add rm -rf .tmp command if name = main*)
+    let rm_temp_dir =  
+    (match name with
+      "main" ->     
+	    let string_head = L.build_global_stringptr rm_tmp_cmd "" builder in 
+        let zero_const = L.const_int i32_t 0 in
+        let str = L.build_in_bounds_gep string_head [| zero_const |] "" builder in
+        ignore(L.build_call system_func [| str |] "rmdir_tmpf" builder);
+      | _ -> ()
+    ) in
+    rm_temp_dir;  
 
     (* Add a return if the last block falls off the end *)
     add_terminal builder (match fdecl.A.typ with
