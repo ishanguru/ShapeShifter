@@ -1,0 +1,16 @@
+// Translate a tetra
+
+int scene() {
+    Shape tet;
+
+    tet = TETRA;
+
+    if (tet == TETRA) {
+
+    Translate(tet, 0.0, 1.0, 0.0);
+
+    }
+
+    print("A tetra was translated.");
+    
+}
