@@ -51,6 +51,7 @@ let check (globals, functions) =
       List.fold_left (fun map (key, value) ->
           StringMap.add key value map
       ) StringMap.empty [
+          ("Copy", { typ = Void; fname = "Copy"; formals = []; body = [] });
           ("Render", { typ = Void; fname = "Render"; formals = []; body = [] });
           ("Save", { typ = Void; fname = "Save"; formals = []; body = [] });
           ("Copy", { typ = Void; fname = "Copy"; formals = []; body = [] });
