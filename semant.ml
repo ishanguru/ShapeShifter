@@ -30,7 +30,8 @@ let check (globals, functions) =
   (* Raise an exception if the given rvalue type cannot be assigned to
      the given lvalue type *)
   let check_assign lvaluet rvaluet err =
-     if lvaluet == rvaluet then lvaluet else raise err
+     if lvaluet = rvaluet then lvaluet else
+     if rvaluet = Void then lvaluet else raise err
   in
    
   (**** Checking Global Variables ****)
@@ -46,12 +47,23 @@ let check (globals, functions) =
     (List.map (fun fd -> fd.fname) functions);
 
   (* Function declaration for a named function *)
-  let built_in_decls = StringMap.add "print"
-     { typ = Void; fname = "print"; formals = [(Int, "x")];
-       body = [] }
-     (StringMap.singleton "printb"
-     { typ = Void; fname = "printb"; formals = [(Bool, "x")];
-       body = [] })
+  let built_in_decls =
+      List.fold_left (fun map (key, value) ->
+          StringMap.add key value map
+      ) StringMap.empty [
+          ("Render", { typ = Void; fname = "Render"; formals = []; body = [] });
+          ("Save", { typ = Void; fname = "Save"; formals = []; body = [] });
+          ("Copy", { typ = Void; fname = "Copy"; formals = []; body = [] });
+          ("Difference", { typ = Void; fname = "Difference"; formals = []; body = [] });
+          ("Intersect", { typ = Void; fname = "Intersect"; formals = []; body = [] });
+          ("Reflect", { typ = Void; fname = "Reflect"; formals = []; body = [] });
+          ("Union", { typ = Void; fname = "Union"; formals = []; body = [] });
+          ("Scale", { typ = Void; fname = "Scale"; formals = []; body = [] });
+          ("Rotate", { typ = Void; fname = "Rotate"; formals = []; body = [] });
+          ("Translate", { typ = Void; fname = "Translate"; formals = []; body = [] });
+          ("print", { typ = Void; fname = "print"; formals = [(Int, "x")]; body = [] });
+          ("printb", { typ = Void; fname = "printb"; formals = [(Bool, "x")]; body = [] });
+      ]
   in
      
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)
@@ -122,17 +134,7 @@ let check (globals, functions) =
           check_assign lt rt (Failure ("illegal assignment " ^ string_of_typ lt ^
 				              " = " ^ string_of_typ rt ^ " in " ^ 
 				              string_of_expr ex))
-      | Call(fname, actuals) as call -> let fd = function_decl fname in
-          if List.length actuals != List.length fd.formals then
-            raise (Failure ("expecting " ^ string_of_int
-              (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
-          else
-            (*List.iter2 (fun (ft, _) e -> let et = expr e in
-               ignore (check_assign ft et
-                 (Failure ("illegal actual argument found " ^ string_of_typ et ^
-                 " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e))))
-              fd.formals actuals;*)
-            fd.typ
+      | Call(fname, _) -> let fd = function_decl fname in fd.typ
       | SpherePrim -> Shape
       | CubePrim -> Shape
       | CylinderPrim -> Shape
@@ -167,7 +169,6 @@ let check (globals, functions) =
           if expr e = t then () else
           raise (Failure ("expression has type " ^ string_of_typ (expr e) ^
           " expected " ^ string_of_typ t))
-      | Break -> ()
     in
     stmt (Block func.body)
   in

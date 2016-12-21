@@ -20,7 +20,7 @@ let _ =
   			
 	let lexbuf = Lexing.from_channel stdin in
   	let ast = Parser.program Scanner.token lexbuf in
-  	(*Semant.check ast;*)
+  	Semant.check ast;
   	
 	match action with
     		| Help -> print_string get_info
